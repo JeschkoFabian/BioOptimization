@@ -1,5 +1,7 @@
 package at.ac.uibk;
 
+import java.util.Arrays;
+
 public class TSP_Exec {
 
 	public static void main(String[] args) {
@@ -7,10 +9,16 @@ public class TSP_Exec {
 		TSP_Node[] nodes = new TSP_Node_Impl[sz];
 
 		for (int i = 0; i < sz; i++) {
-			nodes[i] = new TSP_Node_Impl((int) Math.random() * 1000, (int) Math.random() * 1000);
+//			int x = (int) (Math.random() * 1000);
+//			int y = (int) (Math.random() * 1000);
+			nodes[i] = new TSP_Node_Impl(i, 0);
 		}
 		
+		int[] path = Optimizer.optimize(nodes);
+		int distance = Optimizer.calculatePath(path, nodes);
 		
+		System.out.println("Path distance: " +  distance);
+		System.out.println("Order: " + Arrays.toString(path));
 	}
 
 }

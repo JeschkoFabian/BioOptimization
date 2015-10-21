@@ -14,7 +14,7 @@ public class Optimizer {
 		// randomize by permutations
 		for (int i = 0; i < size; i++){
 			// random rounded number
-			int toSwitch = (int) (Math.random() * size + 0.5);
+			int toSwitch = (int) (Math.random() * size);
 			
 			int tmp = arr[i];
 			arr[i] = arr[toSwitch];
@@ -28,24 +28,18 @@ public class Optimizer {
 	public static int[] optimize(TSP_Node[] input){
 		int[] ordering = generateRandomArray(input.length);
 		
-		// meh needs something better and some thinking^^
-		for (int i = 0; i < input.length; i++){
-			TSP_Node current = input[i];
-			int dist = Integer.MAX_VALUE;
-			TSP_Node tmp;
-			
-			for (int j = 0; j < input.length; j++){
-				if (i == j)
-					continue;
-				
-				if (current.calculateDistance(input[j]) < dist){
-					
-				}
-			}
-		}
 		
 		return ordering;
 	}
 	
+	public static int calculatePath(int[] order, TSP_Node[] nodes){
+		int dist = 0;
+		
+		for (int i = 0; i < order.length; i++){
+			dist += nodes[i].calculateDistance(nodes[order[i]]);
+		}
+		
+		return dist;
+	}
 	
 }

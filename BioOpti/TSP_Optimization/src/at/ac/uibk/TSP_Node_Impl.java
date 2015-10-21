@@ -18,8 +18,13 @@ public class TSP_Node_Impl implements TSP_Node{
 	
 	@Override
 	public int calculateDistance(TSP_Node other) {
+		TSP_Node_Impl node = (TSP_Node_Impl) other;
 		
-		return (int) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+		return (int) Math.sqrt(Math.pow(x - node.getX(), 2) + Math.pow(y - node.getY(), 2));
 	}
 
+	@Override
+	public String toString() {
+		return "Node[" + x + ", " + y + "]";
+	}
 }
