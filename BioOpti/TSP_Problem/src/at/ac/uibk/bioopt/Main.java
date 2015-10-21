@@ -55,16 +55,16 @@ public class Main {
 
 		tour = new Tour(randArr, distArr);
 		
-		System.out.print("INITIAL PATH: ");
+		System.out.print("\nINITIAL PATH:\t");
 		for (int i = 0; i < ARR_SIZE; i++) {
 			System.out.print(randArr[i] + " --> ");
 		}
-		System.out.println(randArr[0] + "  |  " + tour.getDistance());
+		System.out.println(randArr[0] + "  |  Distance: " + tour.getDistance()+"\n");
 
 		
 		twoOpt();
 		
-		System.out.println("RESULT: " + tour.toString());
+		System.out.println("\nRESULT:\t\t" + tour.toString());
 
 	}
 
@@ -85,7 +85,7 @@ public class Main {
 						improve = 0;
 						tour = newTour;
 						best_distance = new_distance;
-						System.out.println("NEW PATH: " + tour.toString());
+						System.out.println("IMPROVED PATH:\t" + tour.toString());
 					}
 				}
 			}
