@@ -1,8 +1,7 @@
 package at.ac.uibk;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+import java.util.TreeMap;
 
 public class Optimizer {
 	private static Random r = new Random();
@@ -26,7 +25,8 @@ public class Optimizer {
 		return arr;
 	}
 
-	// takes an array of nodes as input, returns the order to travel them
+	// takes an array of nodes as input, returns the order to travel them,
+	// linear stuff
 	public static int[] optimize(TSP_Node[] input, int iter) {
 		int[] ordering = generateRandomArray(input.length);
 
@@ -62,48 +62,109 @@ public class Optimizer {
 		return ordering;
 	}
 
+	// neighborhood search, somewhat ok results now ~7000 best
 	public static int[] optimize2(TSP_Node[] input, int iter) {
 		int[] ordering = generateRandomArray(input.length);
 
 		double currentDist = calculatePath(ordering, input);
+		double oldDist = currentDist;
 
 		for (int i = 0; i < iter; i++) {
-			int middle = r.nextInt(input.length);
-			List<int[]> neighbors = new ArrayList<>();
+			// int middle = r.nextInt(input.length);
+			TreeMap<Double, int[]> neighbors = new TreeMap<Double, int[]>();
 
-			for (int j = 0; j < input.length / 2; j++) {
-				int left = (middle - j < 0) ? middle - j + input.length : middle - j;
-				int right = (middle + j) % input.length;
+			for (int middle = 0; middle < input.length; middle++) {
+				neighbors = getNeighbors(middle, ordering, input, currentDist);
 
-				neighbors.add(swap(ordering, middle, left));
-				neighbors.add(swap(ordering, middle, right));
+				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
+					currentDist = neighbors.firstKey();
+					ordering = neighbors.firstEntry().getValue();
 
-				// take random neighbor
-				int rand = r.nextInt(neighbors.size());
-				double newDist = calculatePath(neighbors.get(rand), input);
-				
-				// if better, keep dist and choose new start location
-				if (newDist < currentDist){
-					currentDist = newDist;
-					ordering = neighbors.get(rand);
-					neighbors.clear();
-					
-					j = 0;
-					middle = r.nextInt(input.length);
+//					 middle = 0;
 				}
 			}
 
+			if (oldDist == currentDist) {
+				System.out.println("iter:" + i);
+			}
+			// cancel earlier if nothing better can be achieved (3 strikes)
+			if (oldDist == currentDist && i == iter / 10) {
+				break;
+			}
 		}
 
 		return ordering;
 	}
 
-	private static int[] swap(int[] arr, int x, int y) {
-		int tmp = arr[x];
-		arr[x] = arr[y];
-		arr[y] = tmp;
+	// one way to implement a neighbor function
+	private static TreeMap<Double, int[]> getNeighbors(int index, int[] order, TSP_Node[] nodes, double currentDist) {
+		TreeMap<Double, int[]> neighbors = new TreeMap<>();
 
-		return arr;
+		int rand = r.nextInt(order.length);
+
+		int i = 1;
+		while (neighbors.size() < 3 && i < order.length / 10) {
+//			 int[] newOrder = swapBetween(order, index, (index + rand + i) %
+//			 order.length);
+
+			// big speedup by choosing a good swap, random is used to offset the
+			// starting point, that way it wont use the first x entries
+			// repeatedly, even though they are probably maximized
+			int[] newOrder = swapBetween(order, (index - i + order.length) % order.length, (index + rand + i)
+					% order.length);
+
+			double newDist = calculatePath(newOrder, nodes);
+
+			if (newDist < currentDist)
+				neighbors.put(newDist, newOrder);
+
+			// i += (1 + i/10);
+			i++;
+		}
+
+		return neighbors;
+	}
+
+	private static int[] swap(int[] arr, int x, int y) {
+		int[] ret = new int[arr.length];
+
+		for (int i = 0; i < arr.length; i++) {
+			if (i == x) {
+				ret[i] = arr[y];
+			} else if (i == y) {
+				ret[i] = arr[x];
+			} else {
+				ret[i] = arr[i];
+			}
+		}
+
+		return ret;
+	}
+
+	private static int[] swapBetween(int[] arr, int x, int y) {
+		int[] ret = new int[arr.length];
+
+		if (x > y) {
+			int tmp = x;
+			x = y;
+			y = tmp;
+		}
+
+		for (int i = 0; i < x; i++) {
+			ret[i] = arr[i];
+		}
+
+		int dec = 0;
+		for (int i = x; i <= y; i++) {
+			ret[i] = arr[y - dec];
+			dec++;
+		}
+
+		for (int i = y + 1; i < arr.length; i++) {
+			ret[i] = arr[i];
+		}
+
+		return ret;
 	}
 
 	public static double calculatePath(int[] order, TSP_Node[] nodes) {

@@ -41,12 +41,15 @@ public class TSP_Exec {
 			double tmpDist = Optimizer.calculatePath(tmpOrder, nodes);
 			avg += tmpDist;
 
+			System.out.println((int) tmpDist);
+			
 			if (tmpDist < bestDist) {
 				bestDist = tmpDist;
 				bestOrder = tmpOrder;
 			}
 		}
 
+		System.out.println("<=============Solution============>");
 		System.out.println("Average Dist: " + (int) (avg / iter));
 		System.out.println("Best Dist: " + (int) bestDist);
 		System.out.println("Best Order: " + Arrays.toString(bestOrder));
