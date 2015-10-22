@@ -1,5 +1,7 @@
 package at.ac.uibk;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class Optimizer {
@@ -56,6 +58,42 @@ public class Optimizer {
 				break;
 		}
 		// System.out.println("Optimized path length: " + (int) currentDist);
+
+		return ordering;
+	}
+
+	public static int[] optimize2(TSP_Node[] input, int iter) {
+		int[] ordering = generateRandomArray(input.length);
+
+		double currentDist = calculatePath(ordering, input);
+
+		for (int i = 0; i < iter; i++) {
+			int middle = r.nextInt(input.length);
+			List<int[]> neighbors = new ArrayList<>();
+
+			for (int j = 0; j < input.length / 2; j++) {
+				int left = (middle - j < 0) ? middle - j + input.length : middle - j;
+				int right = (middle + j) % input.length;
+
+				neighbors.add(swap(ordering, middle, left));
+				neighbors.add(swap(ordering, middle, right));
+
+				// take random neighbor
+				int rand = r.nextInt(neighbors.size());
+				double newDist = calculatePath(neighbors.get(rand), input);
+				
+				// if better, keep dist and choose new start location
+				if (newDist < currentDist){
+					currentDist = newDist;
+					ordering = neighbors.get(rand);
+					neighbors.clear();
+					
+					j = 0;
+					middle = r.nextInt(input.length);
+				}
+			}
+
+		}
 
 		return ordering;
 	}
