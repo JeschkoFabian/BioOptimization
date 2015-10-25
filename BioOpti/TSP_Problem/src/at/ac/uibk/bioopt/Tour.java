@@ -4,12 +4,12 @@ package at.ac.uibk.bioopt;
 public class Tour {
 
 	private int path[];
-	private int distArr[][];
-	private int distance;
+	private double distArr[][];
+	private double distance;
 
-	public Tour(int a[], int b[][]) {
+	public Tour(int a[], double[][] distArr2) {
 		this.path = a;
-		this.distArr = b;
+		this.distArr = distArr2;
 	}
 
 	private void calculateDistance() {
@@ -30,7 +30,7 @@ public class Tour {
 		this.path = path;
 	}
 
-	public int getDistance() {
+	public double getDistance() {
 		calculateDistance();
 		return distance;
 	}
@@ -52,10 +52,10 @@ public class Tour {
 	public String toString(){
 		String tourString = new String();
 		for (int i : this.path){
-			tourString += Integer.toString(i) + " --> ";
+			tourString += Integer.toString(i) + " -> ";
 		}
 		tourString += Integer.toString(this.path[0]);
-		tourString += "  |  Distance: " + this.getDistance();
+		tourString += "  |  Distance: " + Math.round(this.getDistance());
 		return tourString;
 	}
 
