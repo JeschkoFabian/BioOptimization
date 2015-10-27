@@ -36,7 +36,7 @@ public class TSP_Exec {
 		int[] bestOrder = new int[0];
 		int iter = 20;
 		for (int i = 0; i < iter; i++) {
-			int[] tmpOrder = Optimizer.optimize2(nodes, 100);
+			int[] tmpOrder = Optimizer.optimize2(nodes, 1000);
 
 			double tmpDist = Optimizer.calculatePath(tmpOrder, nodes);
 			avg += tmpDist;

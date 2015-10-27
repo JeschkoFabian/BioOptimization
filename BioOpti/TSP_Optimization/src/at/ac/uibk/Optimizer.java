@@ -65,28 +65,41 @@ public class Optimizer {
 	// neighborhood search, somewhat ok results now ~7000 best
 	public static int[] optimize2(TSP_Node[] input, int iter) {
 		int[] ordering = generateRandomArray(input.length);
-
 		double currentDist = calculatePath(ordering, input);
-		double oldDist = currentDist;
 
 		for (int i = 0; i < iter; i++) {
+			double oldDist = currentDist;
+
 			// int middle = r.nextInt(input.length);
 			TreeMap<Double, int[]> neighbors = new TreeMap<Double, int[]>();
 
 			for (int middle = 0; middle < input.length; middle++) {
+				// maybe switch getNeighbors to use normal swap at a certain threshold
 				neighbors = getNeighbors(middle, ordering, input, currentDist);
 
 				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
-					currentDist = neighbors.firstKey();
-					ordering = neighbors.firstEntry().getValue();
+					double rand = r.nextDouble();
 
-//					 middle = 0;
+					if (rand < 0.10 && neighbors.size() > 2) {
+						double tmp = neighbors.higherKey(neighbors.higherKey(neighbors.firstKey()));
+						if (tmp < currentDist) {
+							currentDist = tmp;
+							ordering = neighbors.get(currentDist);
+						}
+					} else if (rand < 0.25 && neighbors.size() > 1) {
+						double tmp = neighbors.higherKey(neighbors.firstKey());
+						if (tmp < currentDist) {
+							currentDist = tmp;
+							ordering = neighbors.get(currentDist);
+						}
+					} else {
+						currentDist = neighbors.firstKey();
+						ordering = neighbors.firstEntry().getValue();
+					}
+					// middle = 0;
 				}
 			}
 
-			if (oldDist == currentDist) {
-				System.out.println("iter:" + i);
-			}
 			// cancel earlier if nothing better can be achieved (3 strikes)
 			if (oldDist == currentDist && i == iter / 10) {
 				break;
@@ -103,9 +116,10 @@ public class Optimizer {
 		int rand = r.nextInt(order.length);
 
 		int i = 1;
+		// to get better solutions but slow the process, remove neighbors.size check
 		while (neighbors.size() < 3 && i < order.length / 10) {
-//			 int[] newOrder = swapBetween(order, index, (index + rand + i) %
-//			 order.length);
+			// int[] newOrder = swapBetween(order, index, (index + rand + i) %
+			// order.length);
 
 			// big speedup by choosing a good swap, random is used to offset the
 			// starting point, that way it wont use the first x entries
