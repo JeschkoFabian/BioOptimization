@@ -62,83 +62,99 @@ public class Optimizer {
 		return ordering;
 	}
 
-	// neighborhood search, somewhat ok results now ~7000 best
-	public static int[] optimize2(TSP_Node[] input, int iter) {
-		int[] ordering = generateRandomArray(input.length);
-		double currentDist = calculatePath(ordering, input);
+	private static int factor = 10;
 
-		for (int i = 0; i < iter; i++) {
+	// neighborhood search, somewhat ok results now 4088 best
+	public static int[] optimize2(TSP_Node[] input, int iter) {
+		int[] currentOrder = generateRandomArray(input.length);
+		double currentDist = calculatePath(currentOrder, input);
+
+		int i = 0;
+		boolean swapMode = true;
+
+		while (i < factor && swapMode) {
 			double oldDist = currentDist;
 
 			// int middle = r.nextInt(input.length);
 			TreeMap<Double, int[]> neighbors = new TreeMap<Double, int[]>();
 
-			for (int middle = 0; middle < input.length; middle++) {
-				// maybe switch getNeighbors to use normal swap at a certain threshold
-				neighbors = getNeighbors(middle, ordering, input, currentDist);
+			for (int j = 0; j < input.length; j++) {
+				// maybe switch getNeighbors to use normal swap at a certain
+				// threshold
+				neighbors = getNeighbors(j, currentOrder, input, currentDist, swapMode);
 
 				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
-					double rand = r.nextDouble();
-
-					if (rand < 0.10 && neighbors.size() > 2) {
-						double tmp = neighbors.higherKey(neighbors.higherKey(neighbors.firstKey()));
-						if (tmp < currentDist) {
-							currentDist = tmp;
-							ordering = neighbors.get(currentDist);
-						}
-					} else if (rand < 0.25 && neighbors.size() > 1) {
-						double tmp = neighbors.higherKey(neighbors.firstKey());
-						if (tmp < currentDist) {
-							currentDist = tmp;
-							ordering = neighbors.get(currentDist);
-						}
-					} else {
-						currentDist = neighbors.firstKey();
-						ordering = neighbors.firstEntry().getValue();
-					}
-					// middle = 0;
+					// double rand = r.nextDouble();
+					// if (rand < 0.05 && neighbors.size() > 2) {
+					// double tmp =
+					// neighbors.higherKey(neighbors.higherKey(neighbors.firstKey()));
+					// currentDist = tmp;
+					// ordering = neighbors.get(currentDist);
+					// } else if (rand < 0.15 && neighbors.size() > 1) {
+					// double tmp = neighbors.higherKey(neighbors.firstKey());
+					// currentDist = tmp;
+					// ordering = neighbors.get(currentDist);
+					// } else {
+					currentDist = neighbors.firstKey();
+					currentOrder = neighbors.firstEntry().getValue();
+					// }
 				}
 			}
 
 			// cancel earlier if nothing better can be achieved (3 strikes)
-			if (oldDist == currentDist && i == iter / 10) {
-				break;
+			if (oldDist == currentDist) {
+				i++;
+			}
+
+			// reset strikes, change swap function
+			if (i == factor && swapMode) {
+				i = 0;
+				swapMode = false;
 			}
 		}
 
-		return ordering;
+		return currentOrder;
 	}
 
 	// one way to implement a neighbor function
-	private static TreeMap<Double, int[]> getNeighbors(int index, int[] order, TSP_Node[] nodes, double currentDist) {
+	private static TreeMap<Double, int[]> getNeighbors(int index, int[] order, TSP_Node[] nodes,
+			double currentDist, boolean swapMode) {
 		TreeMap<Double, int[]> neighbors = new TreeMap<>();
 
 		int rand = r.nextInt(order.length);
 
 		int i = 1;
-		// to get better solutions but slow the process, remove neighbors.size check
-		while (neighbors.size() < 3 && i < order.length / 10) {
-			// int[] newOrder = swapBetween(order, index, (index + rand + i) %
-			// order.length);
-
+		// to get better solutions but slow the process, remove neighbors.size
+		// check
+		while (neighbors.size() < 3 && i < order.length / factor) {
 			// big speedup by choosing a good swap, random is used to offset the
 			// starting point, that way it wont use the first x entries
 			// repeatedly, even though they are probably maximized
-			int[] newOrder = swapBetween(order, (index - i + order.length) % order.length, (index + rand + i)
-					% order.length);
+
+//			int left = (index - i + order.length) % order.length;
+			int left = index;
+			int right = (index + rand + i) % order.length;
+			int[] newOrder;
+
+			if (swapMode) {
+				newOrder = swapBetween(order, left, right);
+			} else {
+				newOrder = swap(order, left, right);
+			}
 
 			double newDist = calculatePath(newOrder, nodes);
 
-			if (newDist < currentDist)
+			if (newDist < currentDist) {
 				neighbors.put(newDist, newOrder);
+			}
 
-			// i += (1 + i/10);
 			i++;
 		}
 
 		return neighbors;
 	}
 
+	// should use a calc diff function
 	private static int[] swap(int[] arr, int x, int y) {
 		int[] ret = new int[arr.length];
 
