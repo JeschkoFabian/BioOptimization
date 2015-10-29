@@ -25,43 +25,6 @@ public class Optimizer {
 		return arr;
 	}
 
-	// takes an array of nodes as input, returns the order to travel them,
-	// linear stuff
-	public static int[] optimize(TSP_Node[] input, int iter) {
-		int[] ordering = generateRandomArray(input.length);
-
-		double currentDist = calculatePath(ordering, input);
-		// System.out.println("Initial Path length: " + (int) currentDist);
-
-		for (int k = 0; k < iter; k++) {
-			double tmpDist = currentDist;
-
-			for (int i = 0; i < input.length - 1; i++) {
-				for (int j = i + 1; j < input.length; j++) {
-
-					ordering = swap(ordering, i, j);
-					double newDist = calculatePath(ordering, input);
-
-					if (newDist >= currentDist) {
-						// allow worse switches, the closer the new dist is to
-						// the current, the better the chances
-						if ((newDist - currentDist) / currentDist > r.nextDouble() / iter)
-							ordering = swap(ordering, i, j);
-					} else {
-						currentDist = newDist;
-					}
-				}
-			}
-
-			// cancel earlier if nothing better can be achieved
-			if (tmpDist == currentDist)
-				break;
-		}
-		// System.out.println("Optimized path length: " + (int) currentDist);
-
-		return ordering;
-	}
-
 	private static int factor = 10;
 
 	// neighborhood search, somewhat ok results now 4088 best
@@ -81,6 +44,7 @@ public class Optimizer {
 			for (int j = 0; j < input.length; j++) {
 				// maybe switch getNeighbors to use normal swap at a certain
 				// threshold
+				// last param increases neighborhood search space each 3 failures
 				neighbors = getNeighbors(j, currentOrder, input, currentDist, swapMode, (i+1)/3);
 
 				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
