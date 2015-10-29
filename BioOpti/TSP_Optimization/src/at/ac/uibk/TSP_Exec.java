@@ -34,18 +34,19 @@ public class TSP_Exec {
 		double avg = 0;
 		double bestDist = Double.MAX_VALUE;
 		int[] bestOrder = new int[0];
-		int iter = 20;
+		int iter = 1000;
 		for (int i = 0; i < iter; i++) {
-			int[] tmpOrder = Optimizer.optimize2(nodes, 1000);
+			int[] tmpOrder = Optimizer.optimize2(nodes);
 
 			double tmpDist = Optimizer.calculatePath(tmpOrder, nodes);
 			avg += tmpDist;
 
-			System.out.println((int) tmpDist);
-			
 			if (tmpDist < bestDist) {
 				bestDist = tmpDist;
 				bestOrder = tmpOrder;
+				
+				System.out.println((int) bestDist);
+				System.out.println(Arrays.toString(bestOrder));
 			}
 		}
 

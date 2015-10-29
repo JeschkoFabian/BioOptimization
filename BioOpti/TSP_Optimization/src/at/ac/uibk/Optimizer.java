@@ -65,7 +65,7 @@ public class Optimizer {
 	private static int factor = 10;
 
 	// neighborhood search, somewhat ok results now 4088 best
-	public static int[] optimize2(TSP_Node[] input, int iter) {
+	public static int[] optimize2(TSP_Node[] input) {
 		int[] currentOrder = generateRandomArray(input.length);
 		double currentDist = calculatePath(currentOrder, input);
 
@@ -81,23 +81,11 @@ public class Optimizer {
 			for (int j = 0; j < input.length; j++) {
 				// maybe switch getNeighbors to use normal swap at a certain
 				// threshold
-				neighbors = getNeighbors(j, currentOrder, input, currentDist, swapMode);
+				neighbors = getNeighbors(j, currentOrder, input, currentDist, swapMode, (i+1)/3);
 
 				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
-					// double rand = r.nextDouble();
-					// if (rand < 0.05 && neighbors.size() > 2) {
-					// double tmp =
-					// neighbors.higherKey(neighbors.higherKey(neighbors.firstKey()));
-					// currentDist = tmp;
-					// ordering = neighbors.get(currentDist);
-					// } else if (rand < 0.15 && neighbors.size() > 1) {
-					// double tmp = neighbors.higherKey(neighbors.firstKey());
-					// currentDist = tmp;
-					// ordering = neighbors.get(currentDist);
-					// } else {
 					currentDist = neighbors.firstKey();
 					currentOrder = neighbors.firstEntry().getValue();
-					// }
 				}
 			}
 
@@ -108,7 +96,7 @@ public class Optimizer {
 
 			// reset strikes, change swap function
 			if (i == factor && swapMode) {
-				i = 0;
+				// i = 0;
 				swapMode = false;
 			}
 		}
@@ -118,20 +106,21 @@ public class Optimizer {
 
 	// one way to implement a neighbor function
 	private static TreeMap<Double, int[]> getNeighbors(int index, int[] order, TSP_Node[] nodes,
-			double currentDist, boolean swapMode) {
+			double currentDist, boolean swapMode, int size) {
 		TreeMap<Double, int[]> neighbors = new TreeMap<>();
 
 		int rand = r.nextInt(order.length);
 
 		int i = 1;
+		int bla = 0;
 		// to get better solutions but slow the process, remove neighbors.size
 		// check
-		while (neighbors.size() < 3 && i < order.length / factor) {
+		while (bla < 3 && i < order.length / factor * size) {
 			// big speedup by choosing a good swap, random is used to offset the
 			// starting point, that way it wont use the first x entries
 			// repeatedly, even though they are probably maximized
 
-//			int left = (index - i + order.length) % order.length;
+			// int left = (index - i + order.length) % order.length;
 			int left = index;
 			int right = (index + rand + i) % order.length;
 			int[] newOrder;
@@ -144,9 +133,10 @@ public class Optimizer {
 
 			double newDist = calculatePath(newOrder, nodes);
 
-			if (newDist < currentDist) {
-				neighbors.put(newDist, newOrder);
-			}
+			if (newDist < currentDist)
+				bla++;
+
+			neighbors.put(newDist, newOrder);
 
 			i++;
 		}
