@@ -28,41 +28,29 @@ public class Optimizer {
 	private static int factor = 10;
 
 	// neighborhood search, somewhat ok results now 4088 best
-	public static int[] optimize2(TSP_Node[] input) {
+	public static int[] optimize(TSP_Node[] input) {
 		int[] currentOrder = generateRandomArray(input.length);
 		double currentDist = calculatePath(currentOrder, input);
+		int k = 0;
 
-		int i = 0;
-		boolean swapMode = true;
-
-		while (i < factor && swapMode) {
-			double oldDist = currentDist;
-
+		while (k < factor * 3) {
 			// int middle = r.nextInt(input.length);
 			TreeMap<Double, int[]> neighbors = new TreeMap<Double, int[]>();
 
 			for (int j = 0; j < input.length; j++) {
-				// maybe switch getNeighbors to use normal swap at a certain
-				// threshold
-				// last param increases neighborhood search space each 3 failures
-				neighbors = getNeighbors(j, currentOrder, input, currentDist, swapMode, (i+1)/3);
+				neighbors = getNeighbors(j, currentOrder, input, currentDist, k +1);
 
 				if (neighbors.size() > 0 && neighbors.firstKey() < currentDist) {
 					currentDist = neighbors.firstKey();
 					currentOrder = neighbors.firstEntry().getValue();
+					
+					k = 0;
+				} else {
+					// if no match, increase neighborhood size
+					k++;
 				}
 			}
 
-			// cancel earlier if nothing better can be achieved (3 strikes)
-			if (oldDist == currentDist) {
-				i++;
-			}
-
-			// reset strikes, change swap function
-			if (i == factor && swapMode) {
-				// i = 0;
-				swapMode = false;
-			}
 		}
 
 		return currentOrder;
@@ -70,7 +58,7 @@ public class Optimizer {
 
 	// one way to implement a neighbor function
 	private static TreeMap<Double, int[]> getNeighbors(int index, int[] order, TSP_Node[] nodes,
-			double currentDist, boolean swapMode, int size) {
+			double currentDist, int size) {
 		TreeMap<Double, int[]> neighbors = new TreeMap<>();
 
 		int rand = r.nextInt(order.length);
@@ -79,7 +67,7 @@ public class Optimizer {
 		int bla = 0;
 		// to get better solutions but slow the process, remove neighbors.size
 		// check
-		while (bla < 3 && i < order.length / factor * size) {
+		while (bla < 3 && i < order.length / factor * (size / 3)) {
 			// big speedup by choosing a good swap, random is used to offset the
 			// starting point, that way it wont use the first x entries
 			// repeatedly, even though they are probably maximized
@@ -87,13 +75,7 @@ public class Optimizer {
 			// int left = (index - i + order.length) % order.length;
 			int left = index;
 			int right = (index + rand + i) % order.length;
-			int[] newOrder;
-
-			if (swapMode) {
-				newOrder = swapBetween(order, left, right);
-			} else {
-				newOrder = swap(order, left, right);
-			}
+			int[] newOrder = swapBetween(order, left, right);
 
 			double newDist = calculatePath(newOrder, nodes);
 
