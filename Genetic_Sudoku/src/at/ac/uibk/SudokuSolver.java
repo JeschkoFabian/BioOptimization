@@ -2,6 +2,7 @@ package at.ac.uibk;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SudokuSolver {
@@ -15,7 +16,7 @@ public class SudokuSolver {
 	}
 
 	public int[][] solve() {
-		population = generateInitialPopulation();
+		population = generateRandomInitialPopulation();
 
 		int[] fitPop = evaluate(population);
 
@@ -34,7 +35,7 @@ public class SudokuSolver {
 		return initial;
 	}
 
-	private List<int[][]> generateInitialPopulation() {
+	private List<int[][]> generateRandomInitialPopulation() {
 		List<int[][]> population = new ArrayList<int[][]>();
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
@@ -55,6 +56,61 @@ public class SudokuSolver {
 
 		return population;
 	};
+
+	/**
+	 * Populate based on the missing elements to have a better overall element
+	 * distribution
+	 * 
+	 * @return
+	 */
+	private List<int[][]> generateInitialPopulation() {
+		int[] stack = new int[9];
+
+		List<int[][]> population = new ArrayList<int[][]>();
+
+		// remove initial elements from the stack
+		for (int i = 0; i < 9; i++) {
+			for (int j = 0; j < 9; j++) {
+				if (initial[i][j] != 0) {
+					stack[initial[i][j]]--;
+				}
+			}
+		}
+
+		for (int i = 0; i < MAX_POPULATION; i++) {
+			int[] tmpStack = Arrays.copyOf(stack, stack.length);
+			int[][] tmpSudoku = copyArr(initial);
+
+			// fill randomly with the remaining
+			for (int j = 0; j < 9; j++) {
+				for (int k = 0; k < 9; k++) {
+					if (initial[j][k] == 0) {
+						int tmp = r.nextInt(9);
+						while (stack[tmp] < 1) {
+							tmp = r.nextInt(9);
+						}
+
+						tmpStack[tmp]--;
+						tmpSudoku[j][k] = tmp;
+					}
+				}
+			}
+
+			population.add(tmpSudoku);
+		}
+
+		return population;
+	}
+
+	private int[][] copyArr(int[][] toCopy) {
+		int[][] copied = new int[toCopy.length][];
+
+		for (int i = 0; i < toCopy.length; i++) {
+			copied[i] = Arrays.copyOf(toCopy[i], toCopy[i].length);
+		}
+
+		return copied;
+	}
 
 	/**
 	 * return number of contradictions in each solution
