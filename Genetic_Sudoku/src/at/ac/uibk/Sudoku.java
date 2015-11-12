@@ -42,7 +42,7 @@ public class Sudoku implements Comparable<Sudoku> {
 
 		int contradictions = 0;
 
-		boolean[] horizontalNums = getFalseArr();
+		boolean[] horizontalNums;
 		boolean[][] verticalNums = new boolean[9][9];
 
 		for (int i = 0; i < 9; i++) {
@@ -51,6 +51,8 @@ public class Sudoku implements Comparable<Sudoku> {
 
 		// fixed some more index problems
 		for (int i = 0; i < 9; i++) {
+			horizontalNums = getFalseArr();
+			
 			for (int j = 0; j < 9; j++) {
 				// check horizontal
 				if (horizontalNums[sudoku[i][j] - 1]) {
@@ -66,6 +68,7 @@ public class Sudoku implements Comparable<Sudoku> {
 					verticalNums[i][sudoku[i][j] - 1] = true;
 				}
 			}
+			
 		}
 
 		return contradictions;

@@ -4,9 +4,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class SudokuSolver {
 	private final int MAX_POPULATION = 10;
@@ -18,7 +16,7 @@ public class SudokuSolver {
 	}
 
 	public Sudoku solve() {
-		List<Sudoku> population = generateInitialPopulation();
+		List<Sudoku> population = generateInitialSubgridPopulation();
 		Sudoku best = population.get(0);
 
 		evaluate(population);
@@ -69,12 +67,61 @@ public class SudokuSolver {
 		return population;
 	};
 
+	// @SuppressWarnings("unused")
+	private List<Sudoku> generateInitialSubgridPopulation() {
+		int[] stack = new int[9];
+
+		List<Sudoku> population = new ArrayList<Sudoku>();
+
+		for (int i = 0; i < MAX_POPULATION; i++) {
+			int[][] tmpSudoku = copyArr(initial);
+
+			// iterate over each 3x3 grid
+			for (int j = 0; j < 9; j++) {
+				// offsets for the subgrids
+				int xOff = (j % 3) * 3;
+				int yOff = (j / 3) * 3;
+
+				// (re)set stack
+				for (int k = 0; k < 9; k++) {
+					stack[k] = 1;
+				}
+
+				for (int x = xOff; x < xOff + 3; x++) {
+					for (int y = yOff; y < yOff + 3; y++) {
+						if (tmpSudoku[x][y] != 0) {
+							stack[tmpSudoku[x][y] - 1]--;
+						}
+					}
+				}
+
+				for (int x = xOff; x < xOff + 3; x++) {
+					for (int y = yOff; y < yOff + 3; y++) {
+						if (tmpSudoku[x][y] == 0) {
+							int tmp = r.nextInt(9);
+							while (stack[tmp] < 1) {
+								tmp = r.nextInt(9);
+							}
+							stack[tmp]--;
+							tmpSudoku[x][y] = tmp + 1;
+						}
+					}
+				}
+			}
+
+			population.add(new Sudoku(tmpSudoku));
+		}
+
+		return population;
+	}
+
 	/**
 	 * Populate based on the missing elements to have a better overall element
 	 * distribution
 	 * 
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private List<Sudoku> generateInitialPopulation() {
 		int[] stack = new int[9];
 
@@ -195,13 +242,22 @@ public class SudokuSolver {
 		int[][] par1 = parent1.getSudoku();
 		int[][] par2 = parent2.getSudoku();
 
-		for (int j = 0; j < 9; j++) {
-			if (j < cut) {
-				tmp1[j] = par1[j];
-				tmp2[j] = par2[j];
-			} else {
-				tmp1[j] = par2[j];
-				tmp2[j] = par1[j];
+		for (int i = 0; i < 9; i++) {
+
+			// offsets for the subgrids
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (i < cut) {
+						tmp1[x][y] = par1[x][y];
+						tmp2[x][y] = par2[x][y];
+					} else {
+						tmp1[x][y] = par2[x][y];
+						tmp2[x][y] = par1[x][y];
+					}
+				}
 			}
 		}
 
@@ -228,45 +284,78 @@ public class SudokuSolver {
 	}
 
 	private List<Sudoku> mutate(List<Sudoku> population) {
-		// mutate into more feasible!
-		List<Sudoku> mutated = new ArrayList<Sudoku>();
-		for (Sudoku entry : population) {
-			int[][] x = entry.getSudoku();
-
-			// Count the amount of each number
-			Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+		for (Sudoku sudoku : population) {
 			for (int i = 0; i < 9; i++) {
-				countMap.put(i, 0);
-			}
-			int[][] temp = new int[9][9];
-			for (int i = 0; i < 9; i++) {
-				for (int j = 0; j < 9; j++) {
-					countMap.put(x[i][j] - 1, countMap.get(x[i][j] - 1) + 1);
+				if (r.nextDouble() > 1.0 / 9) {
+					continue;
 				}
-			}
 
-			for (int i = 0; i < 9; i++) {
-				for (int j = 0; j < 9; j++) {
+				// offsets for the subgrids
+				int xOff = (i % 3) * 3;
+				int yOff = (i / 3) * 3;
 
-					if (initial[i][j] == 0) {
-						temp[i][j] = x[i][j];
-					} else {
-						// based on the amount of each number, the probability
-						// for mutation is slightly varied
-						// e.g. #8 is 12 times in the current sudoku -> prob.
-						// for mutation goes from 1/81 to (12/9)/81
-						// still much work to be done here...
-						if (r.nextInt(81) < countMap.get(x[i][j] - 1) / 9) {
-							temp[i][j] = r.nextInt(9) + 1;
-						} else {
-							temp[i][j] = x[i][j];
-						}
+				int[][] tmp = sudoku.getSudoku();
+				boolean foundOne = false;
+
+				while (!foundOne) {
+					int x1 = xOff + r.nextInt(3);
+					int x2 = xOff + r.nextInt(3);
+
+					int y1 = yOff + r.nextInt(3);
+					int y2 = yOff + r.nextInt(3);
+
+					if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
+						int tmpVal = tmp[x1][y1];
+						tmp[x1][y1] = tmp[x2][y2];
+						tmp[x2][y2] = tmpVal;
+
+						foundOne = true;
 					}
 				}
+				
+				sudoku.setSudoku(tmp);
 			}
-			mutated.add(new Sudoku(temp));
 		}
-		return mutated;
+
+		// mutate into more feasible!
+		// List<Sudoku> mutated = new ArrayList<Sudoku>();
+		// for (Sudoku entry : population) {
+		// int[][] x = entry.getSudoku();
+		//
+		// // Count the amount of each number
+		// Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+		// for (int i = 0; i < 9; i++) {
+		// countMap.put(i, 0);
+		// }
+		// int[][] temp = new int[9][9];
+		// for (int i = 0; i < 9; i++) {
+		// for (int j = 0; j < 9; j++) {
+		// countMap.put(x[i][j] - 1, countMap.get(x[i][j] - 1) + 1);
+		// }
+		// }
+		//
+		// for (int i = 0; i < 9; i++) {
+		// for (int j = 0; j < 9; j++) {
+		//
+		// if (initial[i][j] == 0) {
+		// temp[i][j] = x[i][j];
+		// } else {
+		// based on the amount of each number, the probability
+		// for mutation is slightly varied
+		// e.g. #8 is 12 times in the current sudoku -> prob.
+		// for mutation goes from 1/81 to (12/9)/81
+		// still much work to be done here...
+		// if (r.nextInt(81) < countMap.get(x[i][j] - 1) / 9) {
+		// temp[i][j] = r.nextInt(9) + 1;
+		// } else {
+		// temp[i][j] = x[i][j];
+		// }
+		// }
+		// }
+		// }
+		// mutated.add(new Sudoku(temp));
+		// }
+		return population;
 	}
 
 	/**

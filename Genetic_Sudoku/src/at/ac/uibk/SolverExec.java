@@ -10,9 +10,16 @@ public class SolverExec {
 
 		SudokuSolver solver = new SudokuSolver(initial);
 
-		Sudoku solution = solver.solve();
-		
-		System.out.println(solution);
+		int best = Integer.MAX_VALUE;
+		for (int i = 0; i < 50; i++){
+			Sudoku solution = solver.solve();
+			
+			if (solution.getContradictions() < best){
+				best = solution.getContradictions();
+				
+				System.out.println(solution);
+			}
+		}
 	}
 
 }
