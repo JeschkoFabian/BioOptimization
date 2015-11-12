@@ -3,46 +3,52 @@ package at.ac.uibk;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class SudokuSolver {
 	private final int MAX_POPULATION = 10;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
-	List<int[][]> population;
 
 	public SudokuSolver(int[][] initial) {
 		this.initial = initial;
 	}
 
-	public int[][] solve() {
-		population = generateInitialPopulation();
+	public Sudoku solve() {
+		List<Sudoku> population = generateInitialPopulation();
+		Sudoku best = population.get(0);
 
-		TreeMap<Integer, int[][]> fitPop = evaluate(population);
+		evaluate(population);
 
 		// boolean cond = true;
 		int i = 0;
-		while (i < 1000) {
-			List<int[][]> tmp = recombine(fitPop);
+		do {
+			List<Sudoku> tmp = recombine(population);
 
 			tmp = mutate(tmp);
 
-			TreeMap<Integer, int[][]> fitTmp = evaluate(tmp);
+			evaluate(tmp);
 
-			fitPop = select(fitPop, fitTmp);
+			population = select(population, tmp);
 
-			i++;
-		}
+			if (best.getContradictions() == population.get(0).getContradictions()) {
+				i++;
+			} else {
+				i = 0;
+				best = population.get(0);
+			}
+		} while (i < 100 && best.getContradictions() != 0);
+
 		// return first entry (lowest number of mistakes)
-		return fitPop.firstEntry().getValue();
+		return best;
 	}
 
 	@SuppressWarnings("unused")
-	private List<int[][]> generateRandomInitialPopulation() {
-		List<int[][]> population = new ArrayList<int[][]>();
+	private List<Sudoku> generateRandomInitialPopulation() {
+		List<Sudoku> population = new ArrayList<Sudoku>();
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
 			int[][] tmp = new int[9][9];
@@ -57,7 +63,7 @@ public class SudokuSolver {
 				}
 			}
 
-			population.add(tmp);
+			population.add(new Sudoku(tmp));
 		}
 
 		return population;
@@ -69,10 +75,10 @@ public class SudokuSolver {
 	 * 
 	 * @return
 	 */
-	private List<int[][]> generateInitialPopulation() {
+	private List<Sudoku> generateInitialPopulation() {
 		int[] stack = new int[9];
 
-		List<int[][]> population = new ArrayList<int[][]>();
+		List<Sudoku> population = new ArrayList<Sudoku>();
 
 		for (int i = 0; i < 9; i++) {
 			stack[i] = 9;
@@ -107,7 +113,7 @@ public class SudokuSolver {
 				}
 			}
 
-			population.add(tmpSudoku);
+			population.add(new Sudoku(tmpSudoku));
 		}
 
 		return population;
@@ -130,68 +136,12 @@ public class SudokuSolver {
 	 * closer the better if all are sum(1-9) then optimal
 	 * 
 	 * @param population
-	 * @return 
+	 * @return
 	 */
-	private TreeMap<Integer, int[][]> evaluate(List<int[][]> population) {
-		TreeMap<Integer, int[][]> evaluation = new TreeMap<Integer, int[][]>();
-
-		for (int[][] entry : population) {
-			int contradictions = evaluateSudoku(entry);
-
-			evaluation.put(contradictions, entry);
+	private void evaluate(List<Sudoku> population) {
+		for (Sudoku entry : population) {
+			entry.getContradictions();
 		}
-
-		return evaluation;
-	}
-
-	/**
-	 * Function that evaluates how many contradictions a given sudoku of the
-	 * size 9x9 has.
-	 * 
-	 * @param sudoku
-	 *            some completely filled sudoku
-	 * @return number of contradictions
-	 */
-	private int evaluateSudoku(int[][] sudoku) {
-		int contradictions = 0;
-
-		boolean[] horizontalNums = getFalseArr();
-		boolean[][] verticalNums = new boolean[9][9];
-
-		for (int i = 0; i < 9; i++) {
-			verticalNums[i] = getFalseArr();
-		}
-
-		// fixed some more index problems
-		for (int i = 0; i < 9; i++) {
-			for (int j = 0; j < 9; j++) {
-				// check horizontal
-				if (horizontalNums[sudoku[i][j] - 1]) {
-					contradictions++;
-				} else {
-					horizontalNums[sudoku[i][j] - 1] = true;
-				}
-
-				// check vertical
-				if (verticalNums[i][sudoku[i][j] - 1]) {
-					contradictions++;
-				} else {
-					verticalNums[i][sudoku[i][j] - 1] = true;
-				}
-			}
-		}
-
-		return contradictions;
-	}
-
-	private boolean[] getFalseArr() {
-		boolean[] arr = new boolean[9];
-
-		for (int i = 0; i < 9; i++) {
-			arr[i] = false;
-		}
-
-		return arr;
 	}
 
 	/**
@@ -206,61 +156,83 @@ public class SudokuSolver {
 	 *            the initial TreeMap containing data.
 	 * @return MAX_POPULATION combined elements
 	 */
-	private List<int[][]> recombine(TreeMap<Integer, int[][]> population) {
-		List<int[][]> children = new ArrayList<int[][]>();
+	private List<Sudoku> recombine(List<Sudoku> population) {
+		List<Sudoku> children = new ArrayList<Sudoku>();
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
 			// Choose parents
-			List<Integer> keys = new ArrayList<Integer>(population.keySet());
+			Sudoku parent1, parent2;
 
-			// TODO: extract to function
-			int parent1, parent2;
-			int rand1 = r.nextInt(population.size());
-			int rand2 = r.nextInt(population.size());
-
-			if (rand1 < rand2) {
-				parent1 = keys.get(rand1);
-			} else {
-				parent1 = keys.get(rand2);
-			}
-
-			rand1 = r.nextInt(population.size());
-			rand2 = r.nextInt(population.size());
-
-			if (rand1 < rand2) {
-				parent2 = keys.get(rand1);
-			} else {
-				parent2 = keys.get(rand2);
-			}
+			parent1 = getRandomParent(population);
+			parent2 = getRandomParent(population);
 
 			// combine parents
 			// simple cut
-			// TODO: extract to function, will implement different combine
-			// variants
-			int cut = r.nextInt(81);
-			int[][] temp = new int[9][9];
-			int[][] par1 = population.get(parent1);
-			int[][] par2 = population.get(parent2);
-			for (int j = 0; j < 9; j++) {
-				for (int k = 0; k < 9; k++) {
-					if ((j * 9 + k) < cut) {
-						temp[j][k] = par1[j][k];
-					} else {
-						temp[j][k] = par2[j][k];
-					}
-				}
-			}
-			children.add(temp);
+			List<Sudoku> tmp = singleSlice(parent1, parent2);
+			children.addAll(tmp);
 
 		}
 
 		return children;
 	}
 
-	private List<int[][]> mutate(List<int[][]> population) {
+	private Sudoku getRandomParent(List<Sudoku> population) {
+		int rand1 = r.nextInt(population.size());
+		int rand2 = r.nextInt(population.size());
+
+		if (population.get(rand1).getContradictions() < population.get(rand2).getContradictions()) {
+			return population.get(rand1);
+		} else {
+			return population.get(rand2);
+		}
+	}
+
+	private List<Sudoku> singleSlice(Sudoku parent1, Sudoku parent2) {
+		int cut = r.nextInt(9);
+
+		int[][] tmp1 = new int[9][9];
+		int[][] tmp2 = new int[9][9];
+		int[][] par1 = parent1.getSudoku();
+		int[][] par2 = parent2.getSudoku();
+
+		for (int j = 0; j < 9; j++) {
+			if (j < cut) {
+				tmp1[j] = par1[j];
+				tmp2[j] = par2[j];
+			} else {
+				tmp1[j] = par2[j];
+				tmp2[j] = par1[j];
+			}
+		}
+
+		// int cut = r.nextInt(81);
+		// int[][] tmp = new int[9][9];
+		// int[][] par1 = parent1.getSudoku();
+		// int[][] par2 = parent2.getSudoku();
+		//
+		// for (int j = 0; j < 9; j++) {
+		// for (int k = 0; k < 9; k++) {
+		// if ((j * 9 + k) < cut) {
+		// tmp[j][k] = par1[j][k];
+		// } else {
+		// tmp[j][k] = par2[j][k];
+		// }
+		// }
+		// }
+
+		List<Sudoku> ret = new ArrayList<Sudoku>();
+		ret.add(new Sudoku(tmp1));
+		ret.add(new Sudoku(tmp2));
+
+		return ret;
+	}
+
+	private List<Sudoku> mutate(List<Sudoku> population) {
 		// mutate into more feasible!
-		List<int[][]> mutated = new ArrayList<int[][]>();
-		for (int[][] x : population) {
+		List<Sudoku> mutated = new ArrayList<Sudoku>();
+		for (Sudoku entry : population) {
+			int[][] x = entry.getSudoku();
+
 			// Count the amount of each number
 			Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
 			for (int i = 0; i < 9; i++) {
@@ -292,7 +264,7 @@ public class SudokuSolver {
 					}
 				}
 			}
-			mutated.add(temp);
+			mutated.add(new Sudoku(temp));
 		}
 		return mutated;
 	}
@@ -307,26 +279,21 @@ public class SudokuSolver {
 	 *            second TreeMap to compare
 	 * @return the MAX_POPULATION smallest entries
 	 */
-	private TreeMap<Integer, int[][]> select(TreeMap<Integer, int[][]> initial, TreeMap<Integer, int[][]> evolved) {
-		TreeMap<Integer, int[][]> output = new TreeMap<Integer, int[][]>();
+	private List<Sudoku> select(List<Sudoku> initial, List<Sudoku> evolved) {
+		List<Sudoku> output = new ArrayList<Sudoku>();
 
-		List<Integer> keysInitial = new ArrayList<Integer>(initial.keySet());
-		List<Integer> keysEvolved = new ArrayList<Integer>(evolved.keySet());
+		Collections.sort(initial);
+		Collections.sort(evolved);
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
-			// get the lowest number of failures for each
-			int smallestInitial = keysInitial.get(0);
-			int smallestEvolved = keysEvolved.get(0);
+			if (initial.get(0).getContradictions() < evolved.get(0).getContradictions()) {
+				output.add(initial.get(0));
 
-			// add the smaller to the output and remove the element
-			if (smallestInitial < smallestEvolved) {
-				output.put(smallestInitial, initial.get(smallestInitial));
-
-				keysInitial.remove(0);
+				initial.remove(0);
 			} else {
-				output.put(smallestEvolved, evolved.get(smallestEvolved));
+				output.add(evolved.get(0));
 
-				keysEvolved.remove(0);
+				evolved.remove(0);
 			}
 		}
 

@@ -10,14 +10,9 @@ public class SolverExec {
 
 		SudokuSolver solver = new SudokuSolver(initial);
 
-		int[][] solution = solver.solve();
+		Sudoku solution = solver.solve();
 		
-		for (int i = 0; i < 9; i++){
-			for (int j = 0; j < 9; j++){
-				System.out.print(solution[i][j] + ", ");
-			}
-			System.out.println("");
-		}
+		System.out.println(solution);
 	}
 
 }
