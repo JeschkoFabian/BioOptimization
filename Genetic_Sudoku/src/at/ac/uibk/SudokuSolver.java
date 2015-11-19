@@ -8,7 +8,7 @@ import java.util.List;
 
 public class SudokuSolver {
 	// TODO: play around with pop size
-	private final int MAX_POPULATION = 25;
+	private final int MAX_POPULATION = 50;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
 
@@ -30,6 +30,13 @@ public class SudokuSolver {
 	 * This process will be repeated until either 0 contradictions are reached
 	 * or no better solution was found for x iterations.
 	 * 
+	 * TODO: RESTARTING! Each time a local minimum is found, remember the top x%
+	 * solutions, then restart the algorithm with new random values. Do that y
+	 * times, then merge all best solutions and apply genetic on that one.
+	 * 
+	 * AWWW YISS. Getting many local minima and applying genetic on them gave
+	 * fabulous results.
+	 * 
 	 * @return the best solution found
 	 */
 	public Sudoku solve() {
@@ -37,6 +44,35 @@ public class SudokuSolver {
 		evaluate(population);
 
 		Sudoku best = population.get(0);
+		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
+
+		for (int x = 0; x < 10; x++) {
+			int i = 0;
+			do {
+				List<Sudoku> tmp = recombine(population);
+
+				tmp = mutate(tmp);
+
+				evaluate(tmp);
+
+				population = select(population, tmp);
+
+				if (best.getContradictions() == population.get(0).getContradictions()) {
+					i++;
+				} else {
+					i = 0;
+					best = population.get(0);
+				}
+
+				// TODO: try different iter number
+			} while (i < 5 && best.getContradictions() != 0);
+
+			for (int y = 0; y < MAX_POPULATION / 10; y++) {
+				bestSolutions.add(population.get(y));
+			}
+		}
+
+		population = bestSolutions;
 
 		int i = 0;
 		do {
@@ -56,7 +92,7 @@ public class SudokuSolver {
 			}
 
 			// TODO: try different iter number
-		} while (i < 20 && best.getContradictions() != 0);
+		} while (i < 5 && best.getContradictions() != 0);
 
 		return best;
 	}
