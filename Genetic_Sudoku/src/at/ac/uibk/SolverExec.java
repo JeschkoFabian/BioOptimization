@@ -41,6 +41,7 @@ public class SolverExec {
 					}
 					
 					if (solution.getContradictions() == 0){
+						System.out.println("Iterations: " + solver.getIterations());
 						break;
 					} 
 					

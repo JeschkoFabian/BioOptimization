@@ -7,13 +7,19 @@ import java.util.Collections;
 import java.util.List;
 
 public class SudokuSolver {
+	private int iterations = 0;
+
 	// TODO: play around with pop size
-	private final int MAX_POPULATION = 50;
+	private final int MAX_POPULATION = 100;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
 
 	public SudokuSolver(int[][] initial) {
 		this.initial = initial;
+	}
+
+	public int getIterations() {
+		return iterations;
 	}
 
 	/**
@@ -40,39 +46,41 @@ public class SudokuSolver {
 	 * @return the best solution found
 	 */
 	public Sudoku solve() {
+		// iterations = 0;
+
+		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
 		List<Sudoku> population = generateInitialSubgridPopulation();
 		evaluate(population);
 
-		Sudoku best = population.get(0);
-		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
+		// run genetic selection iterations times, and select the top solutions
+		int iterations = 10;
+		for (int x = 0; x < iterations; x++) {
 
-		for (int x = 0; x < 10; x++) {
-			int i = 0;
-			do {
-				List<Sudoku> tmp = recombine(population);
+			population = getFittestSolutions(population);
 
-				tmp = mutate(tmp);
-
-				evaluate(tmp);
-
-				population = select(population, tmp);
-
-				if (best.getContradictions() == population.get(0).getContradictions()) {
-					i++;
-				} else {
-					i = 0;
-					best = population.get(0);
+			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
+				bestSolutions.add(population.get(y));
+		
+				// just quit if an ideal one was found
+				if (bestSolutions.get(0).getContradictions() == 0){
+					return bestSolutions.get(0);
 				}
 
-				// TODO: try different iter number
-			} while (i < 5 && best.getContradictions() != 0);
-
-			for (int y = 0; y < MAX_POPULATION / 10; y++) {
-				bestSolutions.add(population.get(y));
+				// TODO: benchmark if this solution is better/worse than if it
+				// was left out
+				// NOTE: decreases worst case but increases best case it seems
+//				bestSolutions.set(y, createSubgridSudoku());
 			}
+
 		}
 
-		population = bestSolutions;
+		bestSolutions = getFittestSolutions(bestSolutions);
+
+		return bestSolutions.get(0);
+	}
+
+	private List<Sudoku> getFittestSolutions(List<Sudoku> population) {
+		Sudoku best = population.get(0);
 
 		int i = 0;
 		do {
@@ -91,10 +99,11 @@ public class SudokuSolver {
 				best = population.get(0);
 			}
 
+			iterations++;
 			// TODO: try different iter number
 		} while (i < 5 && best.getContradictions() != 0);
 
-		return best;
+		return population;
 	}
 
 	@SuppressWarnings("unused")
@@ -138,50 +147,54 @@ public class SudokuSolver {
 	 * @return List of filled sudokus
 	 */
 	private List<Sudoku> generateInitialSubgridPopulation() {
-		int[] stack = new int[9];
-
 		List<Sudoku> population = new ArrayList<Sudoku>();
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
-			int[][] tmpSudoku = copyArr(initial);
 
-			// iterate over each 3x3 grid
-			for (int j = 0; j < 9; j++) {
-				// offsets for the subgrids
-				int xOff = (j % 3) * 3;
-				int yOff = (j / 3) * 3;
+			population.add(createSubgridSudoku());
+		}
 
-				// (re)set stack
-				for (int k = 0; k < 9; k++) {
-					stack[k] = 1;
-				}
+		return population;
+	}
 
-				for (int x = xOff; x < xOff + 3; x++) {
-					for (int y = yOff; y < yOff + 3; y++) {
-						if (tmpSudoku[x][y] != 0) {
-							stack[tmpSudoku[x][y] - 1]--;
-						}
-					}
-				}
+	private Sudoku createSubgridSudoku() {
+		int[] stack = new int[9];
+		int[][] tmpSudoku = copyArr(initial);
 
-				for (int x = xOff; x < xOff + 3; x++) {
-					for (int y = yOff; y < yOff + 3; y++) {
-						if (tmpSudoku[x][y] == 0) {
-							int tmp = r.nextInt(9);
-							while (stack[tmp] < 1) {
-								tmp = r.nextInt(9);
-							}
-							stack[tmp]--;
-							tmpSudoku[x][y] = tmp + 1;
-						}
+		// iterate over each 3x3 grid
+		for (int j = 0; j < 9; j++) {
+			// offsets for the subgrids
+			int xOff = (j % 3) * 3;
+			int yOff = (j / 3) * 3;
+
+			// (re)set stack
+			for (int k = 0; k < 9; k++) {
+				stack[k] = 1;
+			}
+
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (tmpSudoku[x][y] != 0) {
+						stack[tmpSudoku[x][y] - 1]--;
 					}
 				}
 			}
 
-			population.add(new Sudoku(tmpSudoku));
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (tmpSudoku[x][y] == 0) {
+						int tmp = r.nextInt(9);
+						while (stack[tmp] < 1) {
+							tmp = r.nextInt(9);
+						}
+						stack[tmp]--;
+						tmpSudoku[x][y] = tmp + 1;
+					}
+				}
+			}
 		}
 
-		return population;
+		return new Sudoku(tmpSudoku);
 	}
 
 	/**
