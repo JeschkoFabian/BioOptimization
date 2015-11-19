@@ -22,6 +22,27 @@ public class SudokuSolver {
 		return iterations;
 	}
 
+	
+	public Sudoku solve (int iterations){
+		int best = Integer.MAX_VALUE;
+		Sudoku bestSudoku = null;
+		
+		for (int i = 0; i < iterations; i++){
+			Sudoku tmp = solve();
+			
+			if (tmp.getContradictions() < best){
+				bestSudoku = tmp;
+				best = tmp.getContradictions();
+			}
+			
+			if (best == 0){
+				return bestSudoku;
+			}
+		}
+		
+		return bestSudoku;
+	}
+	
 	/**
 	 * Will solve the initial sudoku.
 	 * 
@@ -69,7 +90,7 @@ public class SudokuSolver {
 				// TODO: benchmark if this solution is better/worse than if it
 				// was left out
 				// NOTE: decreases worst case but increases best case it seems
-//				bestSolutions.set(y, createSubgridSudoku());
+				bestSolutions.set(y, createSubgridSudoku());
 			}
 
 		}
@@ -101,7 +122,8 @@ public class SudokuSolver {
 
 			iterations++;
 			// TODO: try different iter number
-		} while (i < 5 && best.getContradictions() != 0);
+			// NOTE: higher i gives better local minima, should be used if the best values will be removed
+		} while (i < 20 && best.getContradictions() != 0);
 
 		return population;
 	}

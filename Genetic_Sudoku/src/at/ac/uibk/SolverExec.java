@@ -29,24 +29,30 @@ public class SolverExec {
 				
 				SudokuSolver solver = new SudokuSolver(tmp);
 
-				int best = Integer.MAX_VALUE;
-				for (int i = 0; i < 50; i++){
-					Sudoku solution = solver.solve();
-					
-					if (solution.getContradictions() < best){
-						best = solution.getContradictions();
-						
-						System.out.print(solution);
-						
-					}
-					
-					if (solution.getContradictions() == 0){
-						System.out.println("Iterations: " + solver.getIterations());
-						break;
-					} 
-					
-				}
+				Sudoku solution = solver.solve(50);
 				
+				System.out.println(solution);
+				System.out.println("Iterations: " + solver.getIterations());
+//				
+				
+//				int best = Integer.MAX_VALUE;
+//				for (int i = 0; i < 50; i++){
+//					Sudoku solution = solver.solve();
+//					
+//					if (solution.getContradictions() < best){
+//						best = solution.getContradictions();
+//						
+//						System.out.print(solution);
+//						
+//					}
+//					
+//					if (solution.getContradictions() == 0){
+//						System.out.println("Iterations: " + solver.getIterations());
+//						break;
+//					} 
+//					
+//				}
+//				
 				System.out.println("=========================");
 						
 			} catch (FileNotFoundException e) {
