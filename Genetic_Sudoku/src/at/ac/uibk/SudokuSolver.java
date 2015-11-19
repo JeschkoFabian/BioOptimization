@@ -15,13 +15,28 @@ public class SudokuSolver {
 		this.initial = initial;
 	}
 
+	/**
+	 * Will solve the initial sudoku.
+	 * 
+	 * First of all it will generate the initial population and evaluate it,
+	 * remembering the best solution.
+	 * 
+	 * Then a new population will be created through recombining, and afterwards
+	 * be mutated. Then the new population will be evaluated and the best
+	 * solutions out of the new and old population selected. If there is better
+	 * solution found, remember it.
+	 * 
+	 * This process will be repeated until either 0 contradictions are reached
+	 * or no better solution was found for x iterations.
+	 * 
+	 * @return the best solution found
+	 */
 	public Sudoku solve() {
 		List<Sudoku> population = generateInitialSubgridPopulation();
-		Sudoku best = population.get(0);
-
 		evaluate(population);
 
-		// boolean cond = true;
+		Sudoku best = population.get(0);
+
 		int i = 0;
 		do {
 			List<Sudoku> tmp = recombine(population);
@@ -38,13 +53,20 @@ public class SudokuSolver {
 				i = 0;
 				best = population.get(0);
 			}
-		} while (i < 100 && best.getContradictions() != 0);
 
-		// return first entry (lowest number of mistakes)
+		} while (i < 50 && best.getContradictions() != 0);
+
 		return best;
 	}
 
 	@SuppressWarnings("unused")
+	/**
+	 * NOT USED!
+	 * 
+	 * Will fill the sudoku completely random. Pretty poor for actual use.
+	 * 
+	 * @return some population
+	 */
 	private List<Sudoku> generateRandomInitialPopulation() {
 		List<Sudoku> population = new ArrayList<Sudoku>();
 
@@ -68,6 +90,15 @@ public class SudokuSolver {
 	};
 
 	// @SuppressWarnings("unused")
+	/**
+	 * NOTE: This function is currently in use!
+	 * 
+	 * Generates MAX_POPULATION filled sudokus. In each subgrid the sudokus get
+	 * a value that is not used yet assigned. So if a solution exists, the
+	 * subgrids will automatically be correct.
+	 * 
+	 * @return List of filled sudokus
+	 */
 	private List<Sudoku> generateInitialSubgridPopulation() {
 		int[] stack = new int[9];
 
@@ -116,10 +147,13 @@ public class SudokuSolver {
 	}
 
 	/**
-	 * Populate based on the missing elements to have a better overall element
-	 * distribution
+	 * NOT USED!
 	 * 
-	 * @return
+	 * Populate based on the missing elements in the current row to have a
+	 * better overall element distribution. Proved to be a poor choice for the
+	 * current solution, might be good for another approach.
+	 * 
+	 * @return some population
 	 */
 	@SuppressWarnings("unused")
 	private List<Sudoku> generateInitialPopulation() {
@@ -166,6 +200,14 @@ public class SudokuSolver {
 		return population;
 	}
 
+	/**
+	 * Just creates a new int[][] array out of the given one, proved to be
+	 * useful.
+	 * 
+	 * @param toCopy
+	 *            arr to copy
+	 * @return the copied arr
+	 */
 	private int[][] copyArr(int[][] toCopy) {
 		int[][] copied = new int[toCopy.length][];
 
@@ -179,11 +221,11 @@ public class SudokuSolver {
 	/**
 	 * Calculate all contradictions for all sudokus.
 	 * 
-	 * alternate solution: sum up all rows/columns, need to be sum(1-9), the
-	 * closer the better if all are sum(1-9) then optimal
+	 * Not REALLY necessary but here for the algorithms sake. Does not influence
+	 * the performance anyways.
 	 * 
 	 * @param population
-	 * @return
+	 *            some sudokus
 	 */
 	private void evaluate(List<Sudoku> population) {
 		for (Sudoku entry : population) {
@@ -192,16 +234,16 @@ public class SudokuSolver {
 	}
 
 	/**
-	 * Takes a TreeMap as input, chooses two random candidates for the
-	 * combination. The smaller one will be chosen as first parent, the process
-	 * is repeated for the second parent. Once both parents have been decided, a
-	 * random cut point will be defined. Up to the cutpoint all elements from
-	 * the parent are taken, from then all the elements from the second are
-	 * taken. This is repeated MAX_POPULATION times.
+	 * Will select two random parents (according to two tournament) and apply
+	 * the {@link #singleSlice(Sudoku, Sudoku) singleSlice} to generate two
+	 * children. These children will be added to the new population.
+	 * 
+	 * The process is repeated MAX_POPULATION times to generate an array with
+	 * twice the size of the initial one.
 	 * 
 	 * @param population
-	 *            the initial TreeMap containing data.
-	 * @return MAX_POPULATION combined elements
+	 *            the actual unmodified population
+	 * @return the bred solutions
 	 */
 	private List<Sudoku> recombine(List<Sudoku> population) {
 		List<Sudoku> children = new ArrayList<Sudoku>();
@@ -223,6 +265,14 @@ public class SudokuSolver {
 		return children;
 	}
 
+	/**
+	 * Takes two random sudokus and returns the one with fewer contradictions.
+	 * (Two tournament)
+	 * 
+	 * @param population
+	 *            all current sudokus
+	 * @return a random sudoku
+	 */
 	private Sudoku getRandomParent(List<Sudoku> population) {
 		int rand1 = r.nextInt(population.size());
 		int rand2 = r.nextInt(population.size());
@@ -234,6 +284,18 @@ public class SudokuSolver {
 		}
 	}
 
+	/**
+	 * Takes two sudokus, generates a random number between 1 and 9 and slices
+	 * those at that point (in terms of subgrids). Then the first n subgrids are
+	 * taken from each parent and combined with the remaining subgrids of the
+	 * other parent. Those two solutions will then be returned.
+	 * 
+	 * @param parent1
+	 *            first parent
+	 * @param parent2
+	 *            second parent
+	 * @return both children
+	 */
 	private List<Sudoku> singleSlice(Sudoku parent1, Sudoku parent2) {
 		int cut = r.nextInt(9);
 
@@ -261,21 +323,6 @@ public class SudokuSolver {
 			}
 		}
 
-		// int cut = r.nextInt(81);
-		// int[][] tmp = new int[9][9];
-		// int[][] par1 = parent1.getSudoku();
-		// int[][] par2 = parent2.getSudoku();
-		//
-		// for (int j = 0; j < 9; j++) {
-		// for (int k = 0; k < 9; k++) {
-		// if ((j * 9 + k) < cut) {
-		// tmp[j][k] = par1[j][k];
-		// } else {
-		// tmp[j][k] = par2[j][k];
-		// }
-		// }
-		// }
-
 		List<Sudoku> ret = new ArrayList<Sudoku>();
 		ret.add(new Sudoku(tmp1));
 		ret.add(new Sudoku(tmp2));
@@ -283,6 +330,15 @@ public class SudokuSolver {
 		return ret;
 	}
 
+	/**
+	 * For each sudoku iterate over the subgrids and with a probability of 1/9
+	 * swap two random elements in it (that are not fixed).
+	 *
+	 * 
+	 * @param population
+	 *            the crossover list
+	 * @return the mutated crossover list
+	 */
 	private List<Sudoku> mutate(List<Sudoku> population) {
 		for (Sudoku sudoku : population) {
 			for (int i = 0; i < 9; i++) {
@@ -312,65 +368,28 @@ public class SudokuSolver {
 						foundOne = true;
 					}
 				}
-				
+
 				sudoku.setSudoku(tmp);
 			}
 		}
-
-		// mutate into more feasible!
-		// List<Sudoku> mutated = new ArrayList<Sudoku>();
-		// for (Sudoku entry : population) {
-		// int[][] x = entry.getSudoku();
-		//
-		// // Count the amount of each number
-		// Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
-		// for (int i = 0; i < 9; i++) {
-		// countMap.put(i, 0);
-		// }
-		// int[][] temp = new int[9][9];
-		// for (int i = 0; i < 9; i++) {
-		// for (int j = 0; j < 9; j++) {
-		// countMap.put(x[i][j] - 1, countMap.get(x[i][j] - 1) + 1);
-		// }
-		// }
-		//
-		// for (int i = 0; i < 9; i++) {
-		// for (int j = 0; j < 9; j++) {
-		//
-		// if (initial[i][j] == 0) {
-		// temp[i][j] = x[i][j];
-		// } else {
-		// based on the amount of each number, the probability
-		// for mutation is slightly varied
-		// e.g. #8 is 12 times in the current sudoku -> prob.
-		// for mutation goes from 1/81 to (12/9)/81
-		// still much work to be done here...
-		// if (r.nextInt(81) < countMap.get(x[i][j] - 1) / 9) {
-		// temp[i][j] = r.nextInt(9) + 1;
-		// } else {
-		// temp[i][j] = x[i][j];
-		// }
-		// }
-		// }
-		// }
-		// mutated.add(new Sudoku(temp));
-		// }
 		return population;
 	}
 
 	/**
-	 * Takes two TreeMap's as input and will take the ten smallest elements
-	 * overall and will return them.
+	 * Takes two lists of sudokus and will select the MAX_POPULATION best
+	 * solutions and return them.
+	 * 
 	 * 
 	 * @param initial
-	 *            first TreeMap to compare
+	 *            the unmodified sudokus
 	 * @param evolved
-	 *            second TreeMap to compare
-	 * @return the MAX_POPULATION smallest entries
+	 *            the evolved sudokus
+	 * @return best solutions
 	 */
 	private List<Sudoku> select(List<Sudoku> initial, List<Sudoku> evolved) {
 		List<Sudoku> output = new ArrayList<Sudoku>();
 
+		// can be sorted due to implementing comparable on contradictions
 		Collections.sort(initial);
 		Collections.sort(evolved);
 

@@ -29,8 +29,13 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	/**
-	 * Function that evaluates how many contradictions a given sudoku of the
+	 * Function that evaluates how many contradictions a given Sudoku of the
 	 * size 9x9 has.
+	 * 
+	 * Does not check the integrity of the 3x3 boxes. Reason being, we generate
+	 * valid boxes and never apply changes that destroy the validity. If the box
+	 * was invalid per definition... dunno, but it is filled as correctly as
+	 * possible afterwards.
 	 * 
 	 * @param sudoku
 	 *            some completely filled sudoku
@@ -52,7 +57,7 @@ public class Sudoku implements Comparable<Sudoku> {
 		// fixed some more index problems
 		for (int i = 0; i < 9; i++) {
 			horizontalNums = getFalseArr();
-			
+
 			for (int j = 0; j < 9; j++) {
 				// check horizontal
 				if (horizontalNums[sudoku[i][j] - 1]) {
@@ -68,7 +73,7 @@ public class Sudoku implements Comparable<Sudoku> {
 					verticalNums[i][sudoku[i][j] - 1] = true;
 				}
 			}
-			
+
 		}
 
 		return contradictions;
@@ -87,8 +92,8 @@ public class Sudoku implements Comparable<Sudoku> {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		String line = "+-------+-------+-------+" +  System.lineSeparator();
-		
+		String line = "+-------+-------+-------+" + System.lineSeparator();
+
 		sb.append("Contradicitons: " + getContradictions() + System.lineSeparator());
 
 		sb.append(line);
@@ -97,7 +102,7 @@ public class Sudoku implements Comparable<Sudoku> {
 			sb.append("| ");
 			for (int j = 0; j < 9; j++) {
 				if (j != 8)
-					if ((j+1) % 3 == 0)
+					if ((j + 1) % 3 == 0)
 						sb.append(sudoku[i][j] + " | ");
 					else
 						sb.append(sudoku[i][j] + " ");
@@ -106,8 +111,8 @@ public class Sudoku implements Comparable<Sudoku> {
 				}
 			}
 			sb.append(" |" + System.lineSeparator());
-			
-			if ((i+1) % 3 == 0 && i != 8){
+
+			if ((i + 1) % 3 == 0 && i != 8) {
 				sb.append(line);
 			}
 		}
