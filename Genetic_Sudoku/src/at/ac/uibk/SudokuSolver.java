@@ -7,7 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class SudokuSolver {
-	private final int MAX_POPULATION = 10;
+	// TODO: play around with pop size
+	private final int MAX_POPULATION = 25;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
 
@@ -54,7 +55,8 @@ public class SudokuSolver {
 				best = population.get(0);
 			}
 
-		} while (i < 50 && best.getContradictions() != 0);
+			// TODO: try different iter number
+		} while (i < 20 && best.getContradictions() != 0);
 
 		return best;
 	}
@@ -290,6 +292,8 @@ public class SudokuSolver {
 	 * taken from each parent and combined with the remaining subgrids of the
 	 * other parent. Those two solutions will then be returned.
 	 * 
+	 * TODO: try n-slice
+	 * 
 	 * @param parent1
 	 *            first parent
 	 * @param parent2
@@ -334,6 +338,7 @@ public class SudokuSolver {
 	 * For each sudoku iterate over the subgrids and with a probability of 1/9
 	 * swap two random elements in it (that are not fixed).
 	 *
+	 * TODO: swap where most mistakes where found?
 	 * 
 	 * @param population
 	 *            the crossover list
@@ -378,6 +383,8 @@ public class SudokuSolver {
 	/**
 	 * Takes two lists of sudokus and will select the MAX_POPULATION best
 	 * solutions and return them.
+	 * 
+	 * TODO: select 1/3rd bad solutions?
 	 * 
 	 * 
 	 * @param initial

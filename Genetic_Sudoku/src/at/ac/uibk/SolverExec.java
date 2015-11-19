@@ -36,12 +36,14 @@ public class SolverExec {
 					if (solution.getContradictions() < best){
 						best = solution.getContradictions();
 						
-						System.out.println(solution);
+						System.out.print(solution);
+						
 					}
 					
 					if (solution.getContradictions() == 0){
 						break;
-					}
+					} 
+					
 				}
 				
 				System.out.println("=========================");

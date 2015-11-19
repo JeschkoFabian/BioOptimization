@@ -67,10 +67,10 @@ public class Sudoku implements Comparable<Sudoku> {
 				}
 
 				// check vertical
-				if (verticalNums[i][sudoku[i][j] - 1]) {
+				if (verticalNums[j][sudoku[i][j] - 1]) {
 					contradictions++;
 				} else {
-					verticalNums[i][sudoku[i][j] - 1] = true;
+					verticalNums[j][sudoku[i][j] - 1] = true;
 				}
 			}
 
