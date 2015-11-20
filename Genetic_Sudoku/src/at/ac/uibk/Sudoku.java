@@ -94,7 +94,7 @@ public class Sudoku implements Comparable<Sudoku> {
 		StringBuilder sb = new StringBuilder();
 		String line = "+-------+-------+-------+" + System.lineSeparator();
 
-		sb.append("Contradicitons: " + getContradictions() + System.lineSeparator());
+		sb.append("Contradictions: " + getContradictions() + System.lineSeparator());
 
 		sb.append(line);
 
