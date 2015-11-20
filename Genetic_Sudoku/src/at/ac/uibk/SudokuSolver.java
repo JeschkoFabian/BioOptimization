@@ -70,13 +70,13 @@ public class SudokuSolver {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
-		List<Sudoku> population = generateInitialSubgridPopulation();
-		evaluate(population);
-
+	
 		// run genetic selection iterations times, and select the top solutions
 		int iterations = 10;
 		for (int x = 0; x < iterations; x++) {
-
+			List<Sudoku> population = generateInitialSubgridPopulation();
+			evaluate(population);
+			
 			population = getFittestSolutions(population);
 
 			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
