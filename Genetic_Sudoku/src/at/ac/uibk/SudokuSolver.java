@@ -466,20 +466,22 @@ public class SudokuSolver {
 	 */
 	private List<Sudoku> select(List<Sudoku> initial, List<Sudoku> evolved) {
 		List<Sudoku> output = new ArrayList<Sudoku>();
+		
+		evolved.addAll(initial);
 
 		// can be sorted due to implementing comparable on contradictions
-		Collections.sort(initial);
 		Collections.sort(evolved);
+		
 
 		for (int i = 0; i < MAX_POPULATION; i++) {
-			if (initial.get(0).getContradictions() < evolved.get(0).getContradictions()) {
-				output.add(initial.get(0));
-
-				initial.remove(0);
-			} else {
-				output.add(evolved.get(0));
-
-				evolved.remove(0);
+			float chance = (evolved.size() - i)/((float) evolved.size());
+			
+			if (chance >= r.nextDouble()){
+			
+				output.add(evolved.get(i));
+			
+				if (output.size() == MAX_POPULATION)
+					break;
 			}
 		}
 
