@@ -36,7 +36,7 @@ public class SolverExec {
 
 					SudokuSolver solver = new SudokuSolver(tmp);
 
-					Sudoku solution = solver.solve(50);
+					Sudoku solution = solver.solve(30);
 					results[x][k] = solver.getIterations();
 					 System.out.println(listOfSudokus[k].getName());
 					 System.out.println(solution);

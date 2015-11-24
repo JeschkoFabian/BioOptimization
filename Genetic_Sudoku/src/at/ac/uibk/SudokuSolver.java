@@ -12,9 +12,10 @@ public class SudokuSolver {
 	// TODO: play around with pop size
 	private final int MAX_POPULATION = 100;
 	// K for k-Tournament
-	private final int K = 5;
+	private final int K = 4;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
+	private List<List<Sudoku>> popArchives = new ArrayList<List<Sudoku>>();
 
 	public SudokuSolver(int[][] initial) {
 		this.initial = initial;
@@ -71,36 +72,35 @@ public class SudokuSolver {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
-		
-		
+
 		// run genetic selection iterations times, and select the top solutions
-		int iterations = 10;
-		for (int x = 0; x < iterations; x++) {
-			
-			List<Sudoku> population = generateInitialSubgridPopulation();
-			evaluate(population);
+		// int iterations = 10;
+		// for (int x = 0; x < iterations; x++) {
 
-			population = getFittestSolutions(population);
+		List<Sudoku> population = generateInitialSubgridPopulation();
+		evaluate(population);
 
-			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
-				bestSolutions.add(population.get(y));
+		population = getFittestSolutions(population);
 
-				// just quit if an ideal one was found
-				if (bestSolutions.get(0).getContradictions() == 0) {
-					return bestSolutions.get(0);
-				}
+		// for (int y = 0; y < MAX_POPULATION / iterations; y++) {
+		// bestSolutions.add(population.get(y));
+		//
+		// // just quit if an ideal one was found
+		// if (bestSolutions.get(0).getContradictions() == 0) {
+		// return bestSolutions.get(0);
+		// }
+		//
+		// // TODO: benchmark if this solution is better/worse than if it
+		// // was left out
+		// // NOTE: decreases worst case but increases best case it seems
+		// bestSolutions.set(y, createSubgridSudoku());
+		// }
+		//
+		// }
 
-				// TODO: benchmark if this solution is better/worse than if it
-				// was left out
-				// NOTE: decreases worst case but increases best case it seems
-				bestSolutions.set(y, createSubgridSudoku());
-			}
+		// bestSolutions = getFittestSolutions(bestSolutions);
 
-		}
-
-		bestSolutions = getFittestSolutions(bestSolutions);
-
-		return bestSolutions.get(0);
+		return population.get(0);
 	}
 
 	private List<Sudoku> getFittestSolutions(List<Sudoku> population) {
@@ -108,26 +108,27 @@ public class SudokuSolver {
 
 		int i = 0;
 		do {
+
 			List<Sudoku> tmp = recombine(population);
 
 			tmp = mutate(tmp);
 
 			evaluate(tmp);
 
-			population = select(population, tmp);
+			population = selectModified(population, tmp);
 
 			if (best.getContradictions() == population.get(0).getContradictions()) {
 				i++;
 			} else {
+				popArchives.add(population);
 				i = 0;
 				best = population.get(0);
 			}
-
 			iterations++;
 			// TODO: try different iter number
 			// NOTE: higher i gives better local minima, should be used if the
 			// best values will be removed
-		} while (i < 20 && best.getContradictions() != 0);
+		} while (i < 50 && best.getContradictions() != 0);
 
 		return population;
 	}
@@ -334,7 +335,7 @@ public class SudokuSolver {
 
 			// combine parents
 			// simple cut
-			List<Sudoku> tmp = singleSlice(parent1, parent2);
+			List<Sudoku> tmp = randomSlice(parent1, parent2);
 			children.addAll(tmp);
 
 		}
