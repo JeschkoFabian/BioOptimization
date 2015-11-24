@@ -11,6 +11,8 @@ public class SudokuSolver {
 
 	// TODO: play around with pop size
 	private final int MAX_POPULATION = 100;
+	// K for k-Tournament
+	private final int K = 5;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
 
@@ -22,27 +24,26 @@ public class SudokuSolver {
 		return iterations;
 	}
 
-	
-	public Sudoku solve (int iterations){
+	public Sudoku solve(int iterations) {
 		int best = Integer.MAX_VALUE;
 		Sudoku bestSudoku = null;
-		
-		for (int i = 0; i < iterations; i++){
+
+		for (int i = 0; i < iterations; i++) {
 			Sudoku tmp = solve();
-			
-			if (tmp.getContradictions() < best){
+
+			if (tmp.getContradictions() < best) {
 				bestSudoku = tmp;
 				best = tmp.getContradictions();
 			}
-			
-			if (best == 0){
+
+			if (best == 0) {
 				return bestSudoku;
 			}
 		}
-		
+
 		return bestSudoku;
 	}
-	
+
 	/**
 	 * Will solve the initial sudoku.
 	 * 
@@ -70,20 +71,22 @@ public class SudokuSolver {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
-		List<Sudoku> population = generateInitialSubgridPopulation();
-		evaluate(population);
-
+		
+		
 		// run genetic selection iterations times, and select the top solutions
 		int iterations = 10;
 		for (int x = 0; x < iterations; x++) {
+			
+			List<Sudoku> population = generateInitialSubgridPopulation();
+			evaluate(population);
 
 			population = getFittestSolutions(population);
 
 			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
 				bestSolutions.add(population.get(y));
-		
+
 				// just quit if an ideal one was found
-				if (bestSolutions.get(0).getContradictions() == 0){
+				if (bestSolutions.get(0).getContradictions() == 0) {
 					return bestSolutions.get(0);
 				}
 
@@ -122,7 +125,8 @@ public class SudokuSolver {
 
 			iterations++;
 			// TODO: try different iter number
-			// NOTE: higher i gives better local minima, should be used if the best values will be removed
+			// NOTE: higher i gives better local minima, should be used if the
+			// best values will be removed
 		} while (i < 20 && best.getContradictions() != 0);
 
 		return population;
@@ -339,22 +343,29 @@ public class SudokuSolver {
 	}
 
 	/**
-	 * Takes two random sudokus and returns the one with fewer contradictions.
-	 * (Two tournament)
+	 * Takes k random sudokus and returns the one with fewer contradictions. (k
+	 * - tournament)
 	 * 
 	 * @param population
 	 *            all current sudokus
 	 * @return a random sudoku
 	 */
 	private Sudoku getRandomParent(List<Sudoku> population) {
-		int rand1 = r.nextInt(population.size());
-		int rand2 = r.nextInt(population.size());
+		List<Integer> randList = new ArrayList<Integer>();
 
-		if (population.get(rand1).getContradictions() < population.get(rand2).getContradictions()) {
-			return population.get(rand1);
-		} else {
-			return population.get(rand2);
+		for (int i = 0; i < K; i++) {
+			randList.add(r.nextInt(population.size()));
 		}
+
+		Sudoku parent = population.get(randList.get(0));
+
+		for (int i = 1; i < K; i++) {
+			if (population.get(i).getContradictions() < parent.getContradictions()) {
+				parent = population.get(i);
+			}
+		}
+
+		return parent;
 	}
 
 	/**
@@ -388,6 +399,59 @@ public class SudokuSolver {
 			for (int x = xOff; x < xOff + 3; x++) {
 				for (int y = yOff; y < yOff + 3; y++) {
 					if (i < cut) {
+						tmp1[x][y] = par1[x][y];
+						tmp2[x][y] = par2[x][y];
+					} else {
+						tmp1[x][y] = par2[x][y];
+						tmp2[x][y] = par1[x][y];
+					}
+				}
+			}
+		}
+
+		List<Sudoku> ret = new ArrayList<Sudoku>();
+		ret.add(new Sudoku(tmp1));
+		ret.add(new Sudoku(tmp2));
+
+		return ret;
+	}
+
+	/**
+	 * Takes two sudokus and slices them randomly between every subgrid. So we
+	 * get two resulting sudokus, containing every subgrid of the two parents
+	 * (randomly distributed).
+	 * 
+	 * NOTE: Proved to be no improvement compared to the single slice approach.
+	 * 
+	 * @param parent1
+	 *            first parent
+	 * @param parent2
+	 *            second parent
+	 * @return both children
+	 */
+	@SuppressWarnings("unused")
+	private List<Sudoku> randomSlice(Sudoku parent1, Sudoku parent2) {
+		// int cut = r.nextInt(9);
+
+		int[][] tmp1 = new int[9][9];
+		int[][] tmp2 = new int[9][9];
+		int[][] par1 = parent1.getSudoku();
+		int[][] par2 = parent2.getSudoku();
+
+		for (int i = 0; i < 9; i++) {
+
+			// offsets for the subgrids
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+
+			boolean bla = false;
+			if (r.nextDouble() < 0.5) {
+				bla = true;
+			}
+
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (bla) {
 						tmp1[x][y] = par1[x][y];
 						tmp2[x][y] = par2[x][y];
 					} else {
@@ -487,4 +551,51 @@ public class SudokuSolver {
 
 		return output;
 	}
+
+	/**
+	 * Takes two lists of sudokus and will select the 0,9 * MAX_POPULATION best
+	 * solutions and 0,1 * random solutions and returns them.
+	 * 
+	 * NOTE: Not much impact on the results whatsoever. Therefore not worth
+	 * using it.
+	 * 
+	 * @param initial
+	 *            the unmodified sudokus
+	 * @param evolved
+	 *            the evolved sudokus
+	 * @return selected solutions
+	 */
+	@SuppressWarnings("unused")
+	private List<Sudoku> selectModified(List<Sudoku> initial, List<Sudoku> evolved) {
+		List<Sudoku> output = new ArrayList<Sudoku>();
+
+		// can be sorted due to implementing comparable on contradictions
+		Collections.sort(initial);
+		Collections.sort(evolved);
+		int i = 0;
+		for (i = 0; i < MAX_POPULATION - (MAX_POPULATION / 10); i++) {
+			if (initial.get(0).getContradictions() < evolved.get(0).getContradictions()) {
+				output.add(initial.get(0));
+				initial.remove(0);
+			} else {
+				output.add(evolved.get(0));
+				evolved.remove(0);
+			}
+		}
+		for (int j = i + 1; j < MAX_POPULATION; j++) {
+			int rand;
+			if (r.nextDouble() > 0.5) {
+				rand = r.nextInt(initial.size());
+				output.add(initial.get(rand));
+				initial.remove(rand);
+			} else {
+				rand = r.nextInt(evolved.size());
+				output.add(evolved.get(rand));
+				evolved.remove(rand);
+			}
+		}
+
+		return output;
+	}
+
 }
