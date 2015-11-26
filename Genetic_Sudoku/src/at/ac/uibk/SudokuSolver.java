@@ -71,12 +71,11 @@ public class SudokuSolver {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
-		
-		
+
 		// run genetic selection iterations times, and select the top solutions
 		int iterations = 10;
 		for (int x = 0; x < iterations; x++) {
-			
+
 			List<Sudoku> population = generateInitialSubgridPopulation();
 			evaluate(population);
 
@@ -127,7 +126,7 @@ public class SudokuSolver {
 			// TODO: try different iter number
 			// NOTE: higher i gives better local minima, should be used if the
 			// best values will be removed
-		} while (i < 20 && best.getContradictions() != 0);
+		} while (i < 5 && best.getContradictions() != 0);
 
 		return population;
 	}
@@ -472,8 +471,11 @@ public class SudokuSolver {
 	/**
 	 * For each sudoku iterate over the subgrids and with a probability of 1/9
 	 * swap two random elements in it (that are not fixed).
-	 *
+	 * 
 	 * TODO: swap where most mistakes where found?
+	 * 
+	 * TODO: try more drastic approach, swap two elements was not effective
+	 * enough for the previous exercise
 	 * 
 	 * @param population
 	 *            the crossover list
@@ -530,20 +532,19 @@ public class SudokuSolver {
 	 */
 	private List<Sudoku> select(List<Sudoku> initial, List<Sudoku> evolved) {
 		List<Sudoku> output = new ArrayList<Sudoku>();
-		
+
 		evolved.addAll(initial);
 
 		// can be sorted due to implementing comparable on contradictions
 		Collections.sort(evolved);
-		
 
-		for (int i = 0; i < MAX_POPULATION; i++) {
-			float chance = (evolved.size() - i)/((float) evolved.size());
-			
-			if (chance >= r.nextDouble()){
-			
+		for (int i = 0; i < evolved.size(); i++) {
+			float chance = (evolved.size() - i) / ((float) evolved.size());
+
+			if (chance >= r.nextDouble()) {
+
 				output.add(evolved.get(i));
-			
+
 				if (output.size() == MAX_POPULATION)
 					break;
 			}

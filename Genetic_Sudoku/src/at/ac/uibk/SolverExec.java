@@ -36,13 +36,11 @@ public class SolverExec {
 
 					SudokuSolver solver = new SudokuSolver(tmp);
 
-					Sudoku solution = solver.solve(50);
+					Sudoku solution = solver.solve(5);
 					results[x][k] = solver.getIterations();
-					 System.out.println(listOfSudokus[k].getName());
-					 System.out.println(solution);
-					 System.out.println("Iterations: " +
-					 solver.getIterations());
-					
+					System.out.println(listOfSudokus[k].getName());
+					System.out.println(solution);
+					System.out.println("Iterations: " + solver.getIterations());
 
 					// int best = Integer.MAX_VALUE;
 					// for (int i = 0; i < 50; i++){
