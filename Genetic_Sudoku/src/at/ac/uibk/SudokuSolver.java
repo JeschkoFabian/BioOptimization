@@ -12,7 +12,7 @@ public class SudokuSolver {
 	// TODO: play around with pop size
 	private final int MAX_POPULATION = 100;
 	// K for k-Tournament
-	private final int K = 5;
+	private final int K = 4;
 	private SecureRandom r = new SecureRandom();
 	private int[][] initial;
 
