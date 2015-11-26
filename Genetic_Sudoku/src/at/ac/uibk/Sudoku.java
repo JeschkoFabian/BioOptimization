@@ -1,11 +1,19 @@
 package at.ac.uibk;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Sudoku implements Comparable<Sudoku> {
 	private int contradictions = -1;
 	private int[][] sudoku;
+	private Map<Integer, List<Integer>> impossibleValues;
 
 	public Sudoku(int[][] sudoku) {
 		this.sudoku = sudoku;
+		//calculateImpossibleValues();
+		//fillAdditionalValues();
 	}
 
 	public int[][] getSudoku() {
@@ -89,12 +97,135 @@ public class Sudoku implements Comparable<Sudoku> {
 		return arr;
 	}
 
+	public void calculateImpossibleValues() {
+
+		impossibleValues = new HashMap<Integer, List<Integer>>();
+		for (int k = 0; k < 9; k++) {
+			int xOff = (k % 3) * 3;
+			int yOff = (k / 3) * 3;
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (sudoku[x][y] == 0) {
+						List<Integer> impossible = new ArrayList<Integer>();
+						impossible.addAll(getRow(x, y));
+						impossible.addAll(getColumn(x, y));
+						impossible.addAll(getSubgrid(xOff, yOff, x, y));
+						impossibleValues.put(x * 9 + y, impossible);
+					}
+				}
+			}
+		}
+		System.out.println(impossibleValues.toString());
+
+	}
+
+	private List<Integer> getSubgrid(int xOff, int yOff, int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = xOff; i < xOff + 3; i++) {
+			for (int j = yOff; j < yOff + 3; j++) {
+				if (sudoku[i][j] != 0 && i != x && j != y) {
+					impossibleValues.add(sudoku[i][j]);
+				}
+			}
+		}
+		return impossibleValues;
+	}
+
+	private List<Integer> getColumn(int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = 0; i < 9; i++) {
+			if (i != y && sudoku[x][i] != 0) {
+				impossibleValues.add(sudoku[x][i]);
+			}
+
+		}
+		return impossibleValues;
+	}
+
+	private List<Integer> getRow(int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = 0; i < 9; i++) {
+			if (i != x && sudoku[i][y] != 0) {
+				impossibleValues.add(sudoku[i][y]);
+			}
+
+		}
+		return impossibleValues;
+	}
+
+	public List<Integer> getImpossibleValues(int x, int y) {
+		return impossibleValues.get(x * 9 + y);
+	}
+
+	private void fillAdditionalValues() {
+		for (int i = 0; i < 9; i++) {
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (sudoku[x][y] != 0) {
+						for (int j = 1; j <= 9; j++) {
+							if (checkIfImpossibleInRow(x, y, j)
+									|| checkIfImpossibleInColumn(x, y, j)
+									|| checkIfImpossibleInSubgrid(x, y, j,
+											xOff, yOff)) {
+								sudoku[x][y] = j;
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private boolean checkIfImpossibleInSubgrid(int x, int y, int j, int xOff,
+			int yOff) {
+		boolean impossible = true;
+		for (int i = xOff; i < xOff + 3; i++) {
+			for (int k = yOff; k < yOff + 3; k++) {
+				if (sudoku[i][k] != 0) {
+					if (!getImpossibleValues(i, k).contains(j) && i != x
+							&& k != y) {
+						impossible = false;
+					}
+				}
+			}
+		}
+		return impossible;
+	}
+
+	private boolean checkIfImpossibleInColumn(int x, int y, int j) {
+		boolean impossible = true;
+		for (int i = 0; i < 9; i++) {
+			if (sudoku[x][i] != 0) {
+				if (i != y && !getImpossibleValues(x, i).contains(j)) {
+					impossible = false;
+				}
+			}
+		}
+		return impossible;
+	}
+
+	private boolean checkIfImpossibleInRow(int x, int y, int j) {
+		boolean impossible = true;
+		for (int i = 0; i < 9; i++) {
+			if (sudoku[i][y] != 0) {
+				if (i != x && !getImpossibleValues(i, y).contains(j)) {
+					impossible = false;
+				}
+			}
+		}
+		return impossible;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		String line = "+-------+-------+-------+" + System.lineSeparator();
 
-		sb.append("Contradictions: " + getContradictions() + System.lineSeparator());
+		sb.append("Contradictions: " + getContradictions()
+				+ System.lineSeparator());
 
 		sb.append(line);
 
