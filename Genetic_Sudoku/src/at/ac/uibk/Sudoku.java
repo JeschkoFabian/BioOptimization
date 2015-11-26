@@ -12,8 +12,6 @@ public class Sudoku implements Comparable<Sudoku> {
 
 	public Sudoku(int[][] sudoku) {
 		this.sudoku = sudoku;
-		//calculateImpossibleValues();
-		//fillAdditionalValues();
 	}
 
 	public int[][] getSudoku() {
@@ -98,7 +96,6 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	public void calculateImpossibleValues() {
-
 		impossibleValues = new HashMap<Integer, List<Integer>>();
 		for (int k = 0; k < 9; k++) {
 			int xOff = (k % 3) * 3;
@@ -115,7 +112,8 @@ public class Sudoku implements Comparable<Sudoku> {
 				}
 			}
 		}
-		System.out.println(impossibleValues.toString());
+		//System.out.println(impossibleValues.toString());
+		fillAdditionalValues();
 
 	}
 
@@ -123,7 +121,7 @@ public class Sudoku implements Comparable<Sudoku> {
 		List<Integer> impossibleValues = new ArrayList<Integer>();
 		for (int i = xOff; i < xOff + 3; i++) {
 			for (int j = yOff; j < yOff + 3; j++) {
-				if (sudoku[i][j] != 0 && i != x && j != y) {
+				if (sudoku[i][j] != 0 && (i != x || j != y)) {
 					impossibleValues.add(sudoku[i][j]);
 				}
 			}
@@ -158,65 +156,76 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	private void fillAdditionalValues() {
+		int filled = 0;
 		for (int i = 0; i < 9; i++) {
 			int xOff = (i % 3) * 3;
 			int yOff = (i / 3) * 3;
 			for (int x = xOff; x < xOff + 3; x++) {
 				for (int y = yOff; y < yOff + 3; y++) {
-					if (sudoku[x][y] != 0) {
+					if (sudoku[x][y] == 0) {
 						for (int j = 1; j <= 9; j++) {
-							if (checkIfImpossibleInRow(x, y, j)
-									|| checkIfImpossibleInColumn(x, y, j)
-									|| checkIfImpossibleInSubgrid(x, y, j,
-											xOff, yOff)) {
-								sudoku[x][y] = j;
-								break;
+							if (!getImpossibleValues(x, y).contains(j)) {
+								if (checkIfOnlyPossibilityInRow(x, y, j) || checkIfOnlyPossibilityInColumn(x, y, j)
+										|| checkIfOnlyPossibilityInSubgrid(x, y, j, xOff, yOff)) {
+									sudoku[x][y] = j;
+									filled++;
+									//System.out.println("value:"+sudoku[x][y] + " x:" + y + " y:" + x);
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+		System.out.println(filled + " additional element(s) were calculated and filled in.");
 	}
 
-	private boolean checkIfImpossibleInSubgrid(int x, int y, int j, int xOff,
-			int yOff) {
-		boolean impossible = true;
+	private boolean checkIfOnlyPossibilityInSubgrid(int x, int y, int j, int xOff, int yOff) {
+		boolean possible = true;
 		for (int i = xOff; i < xOff + 3; i++) {
 			for (int k = yOff; k < yOff + 3; k++) {
-				if (sudoku[i][k] != 0) {
-					if (!getImpossibleValues(i, k).contains(j) && i != x
-							&& k != y) {
-						impossible = false;
+				if (sudoku[i][k] == 0) {
+					if (i != x || k != y) {
+						if (!getImpossibleValues(i, k).contains(j)) {
+							possible = false;
+							break;
+						}
 					}
 				}
 			}
 		}
-		return impossible;
+		return possible;
 	}
 
-	private boolean checkIfImpossibleInColumn(int x, int y, int j) {
-		boolean impossible = true;
+	private boolean checkIfOnlyPossibilityInColumn(int x, int y, int j) {
+		boolean possible = true;
 		for (int i = 0; i < 9; i++) {
-			if (sudoku[x][i] != 0) {
-				if (i != y && !getImpossibleValues(x, i).contains(j)) {
-					impossible = false;
+			if (sudoku[x][i] == 0) {
+				if (i != y) {
+					if (!getImpossibleValues(x, i).contains(j)) {
+						possible = false;
+						break;
+					}
 				}
 			}
 		}
-		return impossible;
+		return possible;
 	}
 
-	private boolean checkIfImpossibleInRow(int x, int y, int j) {
-		boolean impossible = true;
+	private boolean checkIfOnlyPossibilityInRow(int x, int y, int j) {
+		boolean possible = true;
 		for (int i = 0; i < 9; i++) {
-			if (sudoku[i][y] != 0) {
-				if (i != x && !getImpossibleValues(i, y).contains(j)) {
-					impossible = false;
+			if (sudoku[i][y] == 0) {
+				if (i != x) {
+					if (!getImpossibleValues(i, y).contains(j)) {
+						possible = false;
+						break;
+					}
 				}
 			}
 		}
-		return impossible;
+		return possible;
 	}
 
 	@Override
@@ -224,8 +233,7 @@ public class Sudoku implements Comparable<Sudoku> {
 		StringBuilder sb = new StringBuilder();
 		String line = "+-------+-------+-------+" + System.lineSeparator();
 
-		sb.append("Contradictions: " + getContradictions()
-				+ System.lineSeparator());
+		sb.append("Contradictions: " + getContradictions() + System.lineSeparator());
 
 		sb.append(line);
 
