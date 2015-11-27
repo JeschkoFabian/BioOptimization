@@ -34,7 +34,7 @@ public class SolverExec {
 
 					sc.close();
 					Sudoku s = new Sudoku(tmp);
-					s.calculateImpossibleValues();
+					s.calculateAdditionalValues();
 					SudokuSolver solver = new SudokuSolver(s.getSudoku());
 
 					Sudoku solution = solver.solve(5);
