@@ -1,9 +1,15 @@
 package at.ac.uibk;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Sudoku implements Comparable<Sudoku> {
 	private int contradictions = -1;
 	private float deviation = -1;
 	private int[][] sudoku;
+	private Map<Integer, List<Integer>> impossibleValues;
 
 	public Sudoku(int[][] sudoku) {
 		this.sudoku = sudoku;
@@ -124,6 +130,144 @@ public class Sudoku implements Comparable<Sudoku> {
 		}
 
 		return arr;
+	}
+
+	public void calculateAdditionalValues() {
+		boolean changed = true;
+		calculateImpossibleValues();
+		while (changed) {
+			changed = fillAdditionalValues();
+		}
+	}
+
+	public void calculateImpossibleValues() {
+		impossibleValues = new HashMap<Integer, List<Integer>>();
+		for (int k = 0; k < 9; k++) {
+			int xOff = (k % 3) * 3;
+			int yOff = (k / 3) * 3;
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (sudoku[x][y] == 0) {
+						List<Integer> impossible = new ArrayList<Integer>();
+						impossible.addAll(getImpossibleValuesForRow(x, y));
+						impossible.addAll(getImpossibleValuesForColumn(x, y));
+						impossible.addAll(getImpossibleValuesForSubgrid(xOff, yOff, x, y));
+						impossibleValues.put(x * 9 + y, impossible);
+					}
+				}
+			}
+		}
+		// System.out.println(impossibleValues.toString());
+
+	}
+
+	private List<Integer> getImpossibleValuesForSubgrid(int xOff, int yOff, int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = xOff; i < xOff + 3; i++) {
+			for (int j = yOff; j < yOff + 3; j++) {
+				if (sudoku[i][j] != 0 && (i != x || j != y)) {
+					impossibleValues.add(sudoku[i][j]);
+				}
+			}
+		}
+		return impossibleValues;
+	}
+
+	private List<Integer> getImpossibleValuesForColumn(int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = 0; i < 9; i++) {
+			if (i != y && sudoku[x][i] != 0) {
+				impossibleValues.add(sudoku[x][i]);
+			}
+
+		}
+		return impossibleValues;
+	}
+
+	private List<Integer> getImpossibleValuesForRow(int x, int y) {
+		List<Integer> impossibleValues = new ArrayList<Integer>();
+		for (int i = 0; i < 9; i++) {
+			if (i != x && sudoku[i][y] != 0) {
+				impossibleValues.add(sudoku[i][y]);
+			}
+
+		}
+		return impossibleValues;
+	}
+
+	public List<Integer> getImpossibleValues(int x, int y) {
+		return impossibleValues.get(x * 9 + y);
+	}
+
+	private boolean fillAdditionalValues() {
+		int filled = 0;
+		for (int i = 0; i < 9; i++) {
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+			for (int x = xOff; x < xOff + 3; x++) {
+				for (int y = yOff; y < yOff + 3; y++) {
+					if (sudoku[x][y] == 0) {
+						for (int j = 1; j <= 9; j++) {
+							if (!getImpossibleValues(x, y).contains(j)) {
+								if (checkIfOnlyPossibilityInRow(x, y, j) || checkIfOnlyPossibilityInColumn(x, y, j)
+										|| checkIfOnlyPossibilityInSubgrid(x, y, j, xOff, yOff)) {
+									sudoku[x][y] = j;
+									filled++;
+									//System.out.println("value:" + sudoku[x][y] + " x:" + y + " y:" + x);
+									calculateImpossibleValues();
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if (filled > 0) {
+			System.out.println(filled + " additional element(s) were calculated and filled in.");
+		}
+		return filled > 0 ? true : false;
+	}
+
+	private boolean checkIfOnlyPossibilityInSubgrid(int x, int y, int j, int xOff, int yOff) {
+		for (int i = xOff; i < xOff + 3; i++) {
+			for (int k = yOff; k < yOff + 3; k++) {
+				if (sudoku[i][k] == 0) {
+					if (i != x || k != y) {
+						if (!getImpossibleValues(i, k).contains(j)) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean checkIfOnlyPossibilityInColumn(int x, int y, int j) {
+		for (int i = 0; i < 9; i++) {
+			if (sudoku[x][i] == 0) {
+				if (i != y) {
+					if (!getImpossibleValues(x, i).contains(j)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	private boolean checkIfOnlyPossibilityInRow(int x, int y, int j) {
+		for (int i = 0; i < 9; i++) {
+			if (sudoku[i][y] == 0) {
+				if (i != x) {
+					if (!getImpossibleValues(i, y).contains(j)) {
+						return false;
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	@Override
