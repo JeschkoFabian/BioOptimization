@@ -25,15 +25,19 @@ public class SudokuSolver {
 	}
 
 	public Sudoku solve(int iterations) {
-		int best = Integer.MAX_VALUE;
+		// int best = Integer.MAX_VALUE;
+		float best = Float.MAX_VALUE;
 		Sudoku bestSudoku = null;
 
 		for (int i = 0; i < iterations; i++) {
-			Sudoku tmp = solve();
+			Sudoku tmp = solveMultiple(20);
+			// Sudoku tmp = solveSingle();
 
-			if (tmp.getContradictions() < best) {
+			// if (tmp.getContradictions() < best) {
+			if (tmp.getFitness() < best) {
 				bestSudoku = tmp;
-				best = tmp.getContradictions();
+				// best = tmp.getContradictions();
+				best = tmp.getFitness();
 			}
 
 			if (best == 0) {
@@ -67,25 +71,24 @@ public class SudokuSolver {
 	 * 
 	 * @return the best solution found
 	 */
-	public Sudoku solve() {
+	public Sudoku solveMultiple(int iterations) {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
 
 		// run genetic selection iterations times, and select the top solutions
-		int iterations = 10;
 		for (int x = 0; x < iterations; x++) {
-
 			List<Sudoku> population = generateInitialSubgridPopulation();
 			evaluate(population);
 
-			population = getFittestSolutions(population);
+			population = getFittestSolutions(population, 10);
 
 			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
 				bestSolutions.add(population.get(y));
 
 				// just quit if an ideal one was found
-				if (bestSolutions.get(0).getContradictions() == 0) {
+				// if (bestSolutions.get(0).getContradictions() == 0) {
+				if (bestSolutions.get(0).getFitness() == 0) {
 					return bestSolutions.get(0);
 				}
 
@@ -97,25 +100,39 @@ public class SudokuSolver {
 
 		}
 
-		bestSolutions = getFittestSolutions(bestSolutions);
+		bestSolutions = getFittestSolutions(bestSolutions, 20);
 
 		return bestSolutions.get(0);
 	}
 
-	private List<Sudoku> getFittestSolutions(List<Sudoku> population) {
+	public Sudoku solveSingle() {
+		List<Sudoku> population = generateInitialSubgridPopulation();
+		evaluate(population);
+
+		population = getFittestSolutions(population, 25);
+
+		return population.get(0);
+	}
+
+	private List<Sudoku> getFittestSolutions(List<Sudoku> population, int num_errors) {
 		Sudoku best = population.get(0);
 
 		int i = 0;
 		do {
 			List<Sudoku> tmp = recombine(population);
 
-			tmp = mutate(tmp);
+			if (r.nextBoolean())
+				tmp = mutate(tmp);
+			else
+				tmp = mutate2(tmp);
 
 			evaluate(tmp);
 
 			population = select(population, tmp);
 
-			if (best.getContradictions() == population.get(0).getContradictions()) {
+			// if (best.getContradictions() ==
+			// population.get(0).getContradictions()) {
+			if (best.getFitness() <= population.get(0).getFitness()) {
 				i++;
 			} else {
 				i = 0;
@@ -126,7 +143,9 @@ public class SudokuSolver {
 			// TODO: try different iter number
 			// NOTE: higher i gives better local minima, should be used if the
 			// best values will be removed
-		} while (i < 5 && best.getContradictions() != 0);
+			// } while (i < 5 && best.getContradictions() != 0);
+
+		} while (i < num_errors && best.getFitness() != 0);
 
 		return population;
 	}
@@ -305,7 +324,7 @@ public class SudokuSolver {
 	 */
 	private void evaluate(List<Sudoku> population) {
 		for (Sudoku entry : population) {
-			entry.getContradictions();
+			entry.getFitness();
 		}
 	}
 
@@ -328,12 +347,17 @@ public class SudokuSolver {
 			// Choose parents
 			Sudoku parent1, parent2;
 
-			parent1 = getRandomParent(population);
-			parent2 = getRandomParent(population);
+			parent1 = getRandomParent2(population);
+			parent2 = getRandomParent2(population);
 
 			// combine parents
 			// simple cut
-			List<Sudoku> tmp = singleSlice(parent1, parent2);
+			List<Sudoku> tmp = null;
+			if (r.nextBoolean()){
+				tmp = singleSlice(parent1, parent2);
+			} else {
+				tmp = randomSlice(parent1, parent2);
+			}
 			children.addAll(tmp);
 
 		}
@@ -359,12 +383,33 @@ public class SudokuSolver {
 		Sudoku parent = population.get(randList.get(0));
 
 		for (int i = 1; i < K; i++) {
-			if (population.get(i).getContradictions() < parent.getContradictions()) {
+			// if (population.get(i).getContradictions() <
+			// parent.getContradictions()) {
+			if (population.get(i).getFitness() < parent.getFitness()) {
 				parent = population.get(i);
 			}
 		}
 
 		return parent;
+	}
+	
+	private Sudoku getRandomParent2(List<Sudoku> population){
+		float weight_sum = 0;
+		for (Sudoku s : population){
+			weight_sum += s.getFitness();
+		}
+		
+		float val = r.nextFloat() * weight_sum;
+		
+		for (Sudoku s : population){
+			val -= s.getFitness();
+			
+			if (val <= 0){
+				return s;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -428,7 +473,6 @@ public class SudokuSolver {
 	 *            second parent
 	 * @return both children
 	 */
-	@SuppressWarnings("unused")
 	private List<Sudoku> randomSlice(Sudoku parent1, Sudoku parent2) {
 		// int cut = r.nextInt(9);
 
@@ -444,7 +488,7 @@ public class SudokuSolver {
 			int yOff = (i / 3) * 3;
 
 			boolean bla = false;
-			if (r.nextDouble() < 0.5) {
+			if (r.nextBoolean()) {
 				bla = true;
 			}
 
@@ -502,13 +546,83 @@ public class SudokuSolver {
 					int y1 = yOff + r.nextInt(3);
 					int y2 = yOff + r.nextInt(3);
 
+					int total1 = (y1 * 9) + x1;
+					int total2 = (y2 * 9) + x2;
+
+					// swap
+					if (total1 > total2) {
+						int tmp1 = total1;
+						total1 = total2;
+						total2 = tmp1;
+
+						tmp1 = x1;
+						x1 = x2;
+						x2 = tmp1;
+
+						tmp1 = y1;
+						y1 = y2;
+						y2 = tmp1;
+					}
+
+					while (total1 < total2) {
+						if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
+							int tmpVal = tmp[x1][y1];
+							tmp[x1][y1] = tmp[x2][y2];
+							tmp[x2][y2] = tmpVal;
+							foundOne = true;
+						}
+
+						x1++;
+						x2--;
+						if (x1 == 3 || x1 == 6 || x1 == 9) {
+							x1 -= 3;
+							y1++;
+						}
+
+						if (x2 == -1 || x2 == 2 || x2 == 5) {
+							x2 += 3;
+							y2--;
+						}
+
+						total1 = (y1 * 9) + x1;
+						total2 = (y2 * 9) + x2;
+					}
+				}
+
+				sudoku.setSudoku(tmp);
+			}
+		}
+		return population;
+	}
+
+	private List<Sudoku> mutate2(List<Sudoku> population) {
+		for (Sudoku sudoku : population) {
+			for (int i = 0; i < 9; i++) {
+				if (r.nextDouble() > 1.0 / 9) {
+					continue;
+				}
+
+				// offsets for the subgrids
+				int xOff = (i % 3) * 3;
+				int yOff = (i / 3) * 3;
+
+				int[][] tmp = sudoku.getSudoku();
+				boolean foundOne = false;
+
+				while (!foundOne) {
+					int x1 = xOff + r.nextInt(3);
+					int x2 = xOff + r.nextInt(3);
+
+					int y1 = yOff + r.nextInt(3);
+					int y2 = yOff + r.nextInt(3);
+
 					if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
 						int tmpVal = tmp[x1][y1];
 						tmp[x1][y1] = tmp[x2][y2];
 						tmp[x2][y2] = tmpVal;
-
 						foundOne = true;
 					}
+
 				}
 
 				sudoku.setSudoku(tmp);

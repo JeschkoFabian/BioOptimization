@@ -2,6 +2,7 @@ package at.ac.uibk;
 
 public class Sudoku implements Comparable<Sudoku> {
 	private int contradictions = -1;
+	private float deviation = -1;
 	private int[][] sudoku;
 
 	public Sudoku(int[][] sudoku) {
@@ -13,6 +14,7 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	public void setSudoku(int[][] sudoku) {
+		deviation = -1;
 		contradictions = -1;
 		this.sudoku = sudoku;
 	}
@@ -22,10 +24,40 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	public void set(int x, int y, int val) {
-		if (val > 0 && val <= 9)
+		if (val > 0 && val <= 9){
 			sudoku[x][y] = val;
-		else
+			deviation = -1;
+			contradictions = -1;
+		}else
 			throw new IllegalArgumentException("Value not between 1 and 9");
+	}
+
+	public float getDeviation() {
+		if (deviation != -1)
+			return deviation;
+
+		deviation = 0;
+
+		int[] columns = new int[9];
+
+		for (int i = 0; i < 9; i++) {
+			int row = 0;
+
+			for (int j = 0; j < 9; j++) {
+				row += sudoku[i][j];
+				columns[j] += sudoku[i][j];
+			}
+
+			deviation += Math.pow(row - 45, 2);
+		}
+
+		for (int i = 0; i < 9; i++) {
+			deviation += Math.pow(columns[i] - 45, 2);
+		}
+		
+		deviation /= 18;
+		
+		return deviation;
 	}
 
 	/**
@@ -78,6 +110,11 @@ public class Sudoku implements Comparable<Sudoku> {
 
 		return contradictions;
 	}
+	
+	public float getFitness(){
+//		return getContradictions();
+		return getContradictions() + getDeviation() /10;
+	}
 
 	private boolean[] getFalseArr() {
 		boolean[] arr = new boolean[9];
@@ -95,6 +132,7 @@ public class Sudoku implements Comparable<Sudoku> {
 		String line = "+-------+-------+-------+" + System.lineSeparator();
 
 		sb.append("Contradictions: " + getContradictions() + System.lineSeparator());
+		sb.append("Deviation: " + getDeviation() + System.lineSeparator());
 
 		sb.append(line);
 
@@ -124,7 +162,12 @@ public class Sudoku implements Comparable<Sudoku> {
 	@Override
 	public int compareTo(Sudoku o) {
 		// if this less then o -> negative return
-		return this.getContradictions() - o.getContradictions();
+//		return this.getContradictions() - o.getContradictions();
+		if (this.getFitness() < o.getFitness())
+			return -1;
+		if (this.getFitness() > o.getFitness())
+			return +1;
+		return 0;
 	}
 
 }
