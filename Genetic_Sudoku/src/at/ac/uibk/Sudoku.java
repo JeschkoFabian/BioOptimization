@@ -119,7 +119,7 @@ public class Sudoku implements Comparable<Sudoku> {
 	
 	public float getFitness(){
 //		return getContradictions();
-		return getContradictions() + getDeviation() /10;
+		return getContradictions() + getDeviation() / 5;
 	}
 
 	private boolean[] getFalseArr() {
@@ -222,9 +222,6 @@ public class Sudoku implements Comparable<Sudoku> {
 					}
 				}
 			}
-		}
-		if (filled > 0) {
-			System.out.println(filled + " additional element(s) were calculated and filled in.");
 		}
 		return filled > 0 ? true : false;
 	}

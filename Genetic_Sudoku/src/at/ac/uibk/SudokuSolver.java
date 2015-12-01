@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SudokuSolver {
-	private int iterations = 0;
+	private int generations = 0;
 
 	// TODO: play around with pop size
 	private final int MAX_POPULATION = 100;
@@ -21,17 +21,20 @@ public class SudokuSolver {
 	}
 
 	public int getIterations() {
-		return iterations;
+		return generations;
 	}
 
-	public Sudoku solve(int iterations) {
+	public Sudoku solve(int iterations, int retries, boolean multiple) {
 		// int best = Integer.MAX_VALUE;
 		float best = Float.MAX_VALUE;
 		Sudoku bestSudoku = null;
 
 		for (int i = 0; i < iterations; i++) {
-			Sudoku tmp = solveMultiple(20);
-			// Sudoku tmp = solveSingle();
+			Sudoku tmp;
+			if (multiple)
+				tmp = solveMultiple(retries, 10);
+			else
+				tmp = solveSingle(retries);
 
 			// if (tmp.getContradictions() < best) {
 			if (tmp.getFitness() < best) {
@@ -71,7 +74,7 @@ public class SudokuSolver {
 	 * 
 	 * @return the best solution found
 	 */
-	public Sudoku solveMultiple(int iterations) {
+	public Sudoku solveMultiple(int retries, int iterations) {
 		// iterations = 0;
 
 		List<Sudoku> bestSolutions = new ArrayList<Sudoku>();
@@ -81,7 +84,7 @@ public class SudokuSolver {
 			List<Sudoku> population = generateInitialSubgridPopulation();
 			evaluate(population);
 
-			population = getFittestSolutions(population, 10);
+			population = getFittestSolutions(population, retries);
 
 			for (int y = 0; y < MAX_POPULATION / iterations; y++) {
 				bestSolutions.add(population.get(y));
@@ -91,40 +94,40 @@ public class SudokuSolver {
 				if (bestSolutions.get(0).getFitness() == 0) {
 					return bestSolutions.get(0);
 				}
-
-				// TODO: benchmark if this solution is better/worse than if it
-				// was left out
-				// NOTE: decreases worst case but increases best case it seems
-				bestSolutions.set(y, createSubgridSudoku());
 			}
 
 		}
 
-		bestSolutions = getFittestSolutions(bestSolutions, 20);
+		bestSolutions = getFittestSolutions(bestSolutions, retries * 3);
 
 		return bestSolutions.get(0);
 	}
 
-	public Sudoku solveSingle() {
+	public Sudoku solveSingle(int retries) {
 		List<Sudoku> population = generateInitialSubgridPopulation();
 		evaluate(population);
 
-		population = getFittestSolutions(population, 25);
+		population = getFittestSolutions(population, retries);
 
 		return population.get(0);
 	}
 
-	private List<Sudoku> getFittestSolutions(List<Sudoku> population, int num_errors) {
+	private List<Sudoku> getFittestSolutions(List<Sudoku> population, int retries) {
 		Sudoku best = population.get(0);
 
 		int i = 0;
 		do {
 			List<Sudoku> tmp = recombine(population);
 
-			if (r.nextBoolean())
+			int num = r.nextInt(3);
+			if (num == 0)
 				tmp = mutate(tmp);
-			else
+			if (num == 1)
 				tmp = mutate2(tmp);
+			if (num == 2) {
+				tmp = mutate(tmp);
+				tmp = mutate2(tmp);
+			}
 
 			evaluate(tmp);
 
@@ -139,13 +142,8 @@ public class SudokuSolver {
 				best = population.get(0);
 			}
 
-			iterations++;
-			// TODO: try different iter number
-			// NOTE: higher i gives better local minima, should be used if the
-			// best values will be removed
-			// } while (i < 5 && best.getContradictions() != 0);
-
-		} while (i < num_errors && best.getFitness() != 0);
+			generations++;
+		} while (i < retries && best.getFitness() != 0);
 
 		return population;
 	}
@@ -347,13 +345,18 @@ public class SudokuSolver {
 			// Choose parents
 			Sudoku parent1, parent2;
 
-			parent1 = getRandomParent2(population);
-			parent2 = getRandomParent2(population);
+			// if (r.nextBoolean()) {
+			parent1 = getRandomParent(population);
+			parent2 = getRandomParent(population);
+			// } else {
+			// parent1 = getRandomParent2(population);
+			// parent2 = getRandomParent2(population);
+			// }
 
 			// combine parents
 			// simple cut
 			List<Sudoku> tmp = null;
-			if (r.nextBoolean()){
+			if (r.nextBoolean()) {
 				tmp = singleSlice(parent1, parent2);
 			} else {
 				tmp = randomSlice(parent1, parent2);
@@ -392,19 +395,25 @@ public class SudokuSolver {
 
 		return parent;
 	}
-	
-	private Sudoku getRandomParent2(List<Sudoku> population){
+
+	/**
+	 * Roulette wheel selection, just slower, but did not give better results.
+	 * 
+	 * @param population
+	 * @return
+	 */
+	private Sudoku getRandomParent2(List<Sudoku> population) {
 		float weight_sum = 0;
-		for (Sudoku s : population){
+		for (Sudoku s : population) {
 			weight_sum += s.getFitness();
 		}
-		
+
 		float val = r.nextFloat() * weight_sum;
-		
-		for (Sudoku s : population){
+
+		for (Sudoku s : population) {
 			val -= s.getFitness();
-			
-			if (val <= 0){
+
+			if (val <= 0) {
 				return s;
 			}
 		}
@@ -527,66 +536,62 @@ public class SudokuSolver {
 	 */
 	private List<Sudoku> mutate(List<Sudoku> population) {
 		for (Sudoku sudoku : population) {
-			for (int i = 0; i < 9; i++) {
-				if (r.nextDouble() > 1.0 / 9) {
-					continue;
+			int i = r.nextInt(9);
+
+			// offsets for the subgrids
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+
+			int[][] tmp = sudoku.getSudoku();
+			boolean foundOne = false;
+
+			while (!foundOne) {
+				int x1 = xOff + r.nextInt(3);
+				int x2 = xOff + r.nextInt(3);
+
+				int y1 = yOff + r.nextInt(3);
+				int y2 = yOff + r.nextInt(3);
+
+				int total1 = (y1 * 9) + x1;
+				int total2 = (y2 * 9) + x2;
+
+				// swap
+				if (total1 > total2) {
+					int tmp1 = total1;
+					total1 = total2;
+					total2 = tmp1;
+
+					tmp1 = x1;
+					x1 = x2;
+					x2 = tmp1;
+
+					tmp1 = y1;
+					y1 = y2;
+					y2 = tmp1;
 				}
 
-				// offsets for the subgrids
-				int xOff = (i % 3) * 3;
-				int yOff = (i / 3) * 3;
-
-				int[][] tmp = sudoku.getSudoku();
-				boolean foundOne = false;
-
-				while (!foundOne) {
-					int x1 = xOff + r.nextInt(3);
-					int x2 = xOff + r.nextInt(3);
-
-					int y1 = yOff + r.nextInt(3);
-					int y2 = yOff + r.nextInt(3);
-
-					int total1 = (y1 * 9) + x1;
-					int total2 = (y2 * 9) + x2;
-
-					// swap
-					if (total1 > total2) {
-						int tmp1 = total1;
-						total1 = total2;
-						total2 = tmp1;
-
-						tmp1 = x1;
-						x1 = x2;
-						x2 = tmp1;
-
-						tmp1 = y1;
-						y1 = y2;
-						y2 = tmp1;
+				while (total1 < total2) {
+					if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
+						int tmpVal = tmp[x1][y1];
+						tmp[x1][y1] = tmp[x2][y2];
+						tmp[x2][y2] = tmpVal;
+						foundOne = true;
 					}
 
-					while (total1 < total2) {
-						if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
-							int tmpVal = tmp[x1][y1];
-							tmp[x1][y1] = tmp[x2][y2];
-							tmp[x2][y2] = tmpVal;
-							foundOne = true;
-						}
-
-						x1++;
-						x2--;
-						if (x1 == 3 || x1 == 6 || x1 == 9) {
-							x1 -= 3;
-							y1++;
-						}
-
-						if (x2 == -1 || x2 == 2 || x2 == 5) {
-							x2 += 3;
-							y2--;
-						}
-
-						total1 = (y1 * 9) + x1;
-						total2 = (y2 * 9) + x2;
+					x1++;
+					x2--;
+					if (x1 == 3 || x1 == 6 || x1 == 9) {
+						x1 -= 3;
+						y1++;
 					}
+
+					if (x2 == -1 || x2 == 2 || x2 == 5) {
+						x2 += 3;
+						y2--;
+					}
+
+					total1 = (y1 * 9) + x1;
+					total2 = (y2 * 9) + x2;
 				}
 
 				sudoku.setSudoku(tmp);
@@ -597,52 +602,43 @@ public class SudokuSolver {
 
 	private List<Sudoku> mutate2(List<Sudoku> population) {
 		for (Sudoku sudoku : population) {
-			for (int i = 0; i < 9; i++) {
-				if (r.nextDouble() > 1.0 / 9) {
-					continue;
+			int i = r.nextInt(9);
+
+			// offsets for the subgrids
+			int xOff = (i % 3) * 3;
+			int yOff = (i / 3) * 3;
+
+			int[][] tmp = sudoku.getSudoku();
+			boolean foundOne = false;
+
+			while (!foundOne) {
+				int x1 = xOff + r.nextInt(3);
+				int x2 = xOff + r.nextInt(3);
+
+				int y1 = yOff + r.nextInt(3);
+				int y2 = yOff + r.nextInt(3);
+
+				if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
+					int tmpVal = tmp[x1][y1];
+					tmp[x1][y1] = tmp[x2][y2];
+					tmp[x2][y2] = tmpVal;
+					foundOne = true;
 				}
 
-				// offsets for the subgrids
-				int xOff = (i % 3) * 3;
-				int yOff = (i / 3) * 3;
-
-				int[][] tmp = sudoku.getSudoku();
-				boolean foundOne = false;
-
-				while (!foundOne) {
-					int x1 = xOff + r.nextInt(3);
-					int x2 = xOff + r.nextInt(3);
-
-					int y1 = yOff + r.nextInt(3);
-					int y2 = yOff + r.nextInt(3);
-
-					if (initial[x1][y1] == 0 && initial[x2][y2] == 0) {
-						int tmpVal = tmp[x1][y1];
-						tmp[x1][y1] = tmp[x2][y2];
-						tmp[x2][y2] = tmpVal;
-						foundOne = true;
-					}
-
-				}
-
-				sudoku.setSudoku(tmp);
 			}
+
+			sudoku.setSudoku(tmp);
 		}
 		return population;
 	}
 
 	/**
-	 * Takes two lists of sudokus and will select the MAX_POPULATION best
-	 * solutions and return them.
-	 * 
-	 * TODO: select 1/3rd bad solutions?
+	 * Better solutions have a bigger chance to be taken
 	 * 
 	 * 
 	 * @param initial
-	 *            the unmodified sudokus
 	 * @param evolved
-	 *            the evolved sudokus
-	 * @return best solutions
+	 * @return
 	 */
 	private List<Sudoku> select(List<Sudoku> initial, List<Sudoku> evolved) {
 		List<Sudoku> output = new ArrayList<Sudoku>();
