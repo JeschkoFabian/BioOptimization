@@ -30,11 +30,11 @@ public class Sudoku implements Comparable<Sudoku> {
 	}
 
 	public void set(int x, int y, int val) {
-		if (val > 0 && val <= 9){
+		if (val > 0 && val <= 9) {
 			sudoku[x][y] = val;
 			deviation = -1;
 			contradictions = -1;
-		}else
+		} else
 			throw new IllegalArgumentException("Value not between 1 and 9");
 	}
 
@@ -60,9 +60,9 @@ public class Sudoku implements Comparable<Sudoku> {
 		for (int i = 0; i < 9; i++) {
 			deviation += Math.pow(columns[i] - 45, 2);
 		}
-		
+
 		deviation /= 18;
-		
+
 		return deviation;
 	}
 
@@ -116,9 +116,9 @@ public class Sudoku implements Comparable<Sudoku> {
 
 		return contradictions;
 	}
-	
-	public float getFitness(){
-//		return getContradictions();
+
+	public float getFitness() {
+		// return getContradictions();
 		return getContradictions() + getDeviation() / 5;
 	}
 
@@ -132,6 +132,9 @@ public class Sudoku implements Comparable<Sudoku> {
 		return arr;
 	}
 
+	/**
+	 * This method adds additional initial values to a Sudoku.
+	 */
 	public void calculateAdditionalValues() {
 		boolean changed = true;
 		calculateImpossibleValues();
@@ -140,6 +143,10 @@ public class Sudoku implements Comparable<Sudoku> {
 		}
 	}
 
+	/**
+	 * This method calculates for each empty cell the values which cannot be
+	 * written in that cell
+	 */
 	public void calculateImpossibleValues() {
 		impossibleValues = new HashMap<Integer, List<Integer>>();
 		for (int k = 0; k < 9; k++) {
@@ -161,6 +168,21 @@ public class Sudoku implements Comparable<Sudoku> {
 
 	}
 
+	/**
+	 * This method checks a certain cell in a 3x3 subgrid and calculates a list
+	 * with impossible values for that cell, based on the already written values
+	 * in the subgrid.
+	 * 
+	 * @param xOff
+	 *            The x offset of the 3x3 subgrid
+	 * @param yOff
+	 *            The y offset of the 3x3 subgrid
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @return A list with impossible values
+	 */
 	private List<Integer> getImpossibleValuesForSubgrid(int xOff, int yOff, int x, int y) {
 		List<Integer> impossibleValues = new ArrayList<Integer>();
 		for (int i = xOff; i < xOff + 3; i++) {
@@ -173,6 +195,17 @@ public class Sudoku implements Comparable<Sudoku> {
 		return impossibleValues;
 	}
 
+	/**
+	 * This method checks a certain cell in a column and calculates a list with
+	 * impossible values for that cell, based on the already written values in
+	 * the column.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @return A list with impossible values
+	 */
 	private List<Integer> getImpossibleValuesForColumn(int x, int y) {
 		List<Integer> impossibleValues = new ArrayList<Integer>();
 		for (int i = 0; i < 9; i++) {
@@ -184,6 +217,17 @@ public class Sudoku implements Comparable<Sudoku> {
 		return impossibleValues;
 	}
 
+	/**
+	 * This method checks a certain cell in a row and calculates a list with
+	 * impossible values for that cell, based on the already written values in
+	 * the row.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @return A list with impossible values
+	 */
 	private List<Integer> getImpossibleValuesForRow(int x, int y) {
 		List<Integer> impossibleValues = new ArrayList<Integer>();
 		for (int i = 0; i < 9; i++) {
@@ -195,10 +239,24 @@ public class Sudoku implements Comparable<Sudoku> {
 		return impossibleValues;
 	}
 
+	/**
+	 * This method returns a list with impossible values for a certain cell.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @return A list with impossible values
+	 */
 	public List<Integer> getImpossibleValues(int x, int y) {
 		return impossibleValues.get(x * 9 + y);
 	}
 
+	/**
+	 * This method fills in additional initial values in the Sudoku.
+	 * 
+	 * @return True, if the some value was added, False otherwise.
+	 */
 	private boolean fillAdditionalValues() {
 		int filled = 0;
 		for (int i = 0; i < 9; i++) {
@@ -213,7 +271,6 @@ public class Sudoku implements Comparable<Sudoku> {
 										|| checkIfOnlyPossibilityInSubgrid(x, y, j, xOff, yOff)) {
 									sudoku[x][y] = j;
 									filled++;
-									//System.out.println("value:" + sudoku[x][y] + " x:" + y + " y:" + x);
 									calculateImpossibleValues();
 									break;
 								}
@@ -226,6 +283,23 @@ public class Sudoku implements Comparable<Sudoku> {
 		return filled > 0 ? true : false;
 	}
 
+	/**
+	 * This method checks if a certain number can only be written in a certain
+	 * cell in a 3x3 subgrid.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @param j
+	 *            The number
+	 * @param xOff
+	 *            The x offset of the subgrid
+	 * @param yOff
+	 *            The y offset of the subgrid
+	 * @return True, if this cell is the only possibility for this number, False
+	 *         otherwise.
+	 */
 	private boolean checkIfOnlyPossibilityInSubgrid(int x, int y, int j, int xOff, int yOff) {
 		for (int i = xOff; i < xOff + 3; i++) {
 			for (int k = yOff; k < yOff + 3; k++) {
@@ -241,6 +315,19 @@ public class Sudoku implements Comparable<Sudoku> {
 		return true;
 	}
 
+	/**
+	 * This method checks if a certain number can only be written in a certain
+	 * cell in a column.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @param j
+	 *            The number
+	 * @return True, if this cell is the only possibility for this number, False
+	 *         otherwise.
+	 */
 	private boolean checkIfOnlyPossibilityInColumn(int x, int y, int j) {
 		for (int i = 0; i < 9; i++) {
 			if (sudoku[x][i] == 0) {
@@ -254,6 +341,19 @@ public class Sudoku implements Comparable<Sudoku> {
 		return true;
 	}
 
+	/**
+	 * This method checks if a certain number can only be written in a certain
+	 * cell in a row.
+	 * 
+	 * @param x
+	 *            The x index of the cell
+	 * @param y
+	 *            The y index of the cell
+	 * @param j
+	 *            The number
+	 * @return True, if this cell is the only possibility for this number, False
+	 *         otherwise.
+	 */
 	private boolean checkIfOnlyPossibilityInRow(int x, int y, int j) {
 		for (int i = 0; i < 9; i++) {
 			if (sudoku[i][y] == 0) {
@@ -303,7 +403,7 @@ public class Sudoku implements Comparable<Sudoku> {
 	@Override
 	public int compareTo(Sudoku o) {
 		// if this less then o -> negative return
-//		return this.getContradictions() - o.getContradictions();
+		// return this.getContradictions() - o.getContradictions();
 		if (this.getFitness() < o.getFitness())
 			return -1;
 		if (this.getFitness() > o.getFitness())
