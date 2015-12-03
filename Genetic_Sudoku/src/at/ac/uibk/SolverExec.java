@@ -16,6 +16,7 @@ public class SolverExec {
 		Sudoku out = asd.solve(50, 15, false);
 
 		System.out.println("=========================");
+		System.out.println("Assignment sudoku");
 		System.out.println(out);
 		System.out.println("Iterations: " + asd.getIterations());
 
