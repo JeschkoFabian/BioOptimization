@@ -1,7 +1,5 @@
 package at.ac.uibk;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
@@ -86,12 +84,6 @@ public class Particle implements Dominatable<Particle> {
 		}
 	}
 
-	// TODO: String.format
-	public String toString() {
-		return "(" + new BigDecimal(eval[0]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ", "
-				+ new BigDecimal(eval[1]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ")";
-	}
-
 	// ===========================================
 	// getters & setters
 	// ===========================================
@@ -127,7 +119,7 @@ public class Particle implements Dominatable<Particle> {
 		for (int i = 0; i < eval.length; i++) {
 			if (eval[i] > e[i])
 				dominates = false;
-			
+
 			if (eval[i] < e[i])
 				isDominated = false;
 		}
@@ -138,4 +130,22 @@ public class Particle implements Dominatable<Particle> {
 			return DominationStatus.DOMINATED;
 		return DominationStatus.NONDOMINATABLE;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+
+		// number format string
+		String num = "%.2f";
+
+		for (int i = 0; i < eval.length - 1; i++) {
+			sb.append(String.format(num + ", ", eval[i]));
+		}
+
+		sb.append(String.format(num + ")", eval[eval.length - 1]));
+
+		return sb.toString();
+	}
+
 }

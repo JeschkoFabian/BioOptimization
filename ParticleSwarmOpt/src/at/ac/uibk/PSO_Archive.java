@@ -55,7 +55,7 @@ public class PSO_Archive {
 			}
 		}
 
-		particles.add(toInsert);
+		particles.add(new Particle(toInsert));
 
 		if (particles.size() >= limit) {
 			removeParticleWithHighestDensity();

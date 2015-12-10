@@ -25,7 +25,8 @@ public class PSO_Solver {
 				updatePosition(p);
 			}
 			updateArchive();
-			System.out.println("Archive (" + archive.getSize() + ") #" + gen + ": " + archive.toString());
+			System.out.println("Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1) + ": "
+					+ archive.toString());
 		}
 	}
 
