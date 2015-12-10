@@ -41,7 +41,7 @@ public class PSO_Archive {
 	public void insertParticle(Particle toInsert) {
 		for (int i = 0; i < particles.size(); i++) {
 			Particle p = particles.get(i);
-			DominationStatus dom = toInsert.dominateable(p);
+			DominationStatus dom = toInsert.compareTo(p);
 
 			// if new particle is dominated, abort
 			if (dom.equals(DominationStatus.DOMINATED)) {

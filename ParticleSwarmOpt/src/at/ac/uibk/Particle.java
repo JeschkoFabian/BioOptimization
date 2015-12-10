@@ -58,7 +58,7 @@ public class Particle implements Dominatable<Particle> {
 	}
 
 	public void updateBestValue() {
-		DominationStatus dom = this.dominateable(best);
+		DominationStatus dom = this.compareTo(best);
 
 		// positive is this dominates
 		if (dom.equals(DominationStatus.DOMINATES)) {
@@ -116,7 +116,7 @@ public class Particle implements Dominatable<Particle> {
 	}
 
 	@Override
-	public DominationStatus dominateable(Particle o) {
+	public DominationStatus compareTo(Particle o) {
 		// returns negative if this is dominated, positive if the other and 0 if
 		// non
 		double[] e = o.getEval();
