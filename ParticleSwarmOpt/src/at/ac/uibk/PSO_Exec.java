@@ -6,7 +6,6 @@ public class PSO_Exec {
 
 		PSO_Solver solver = new PSO_Solver();
 		solver.solve(100, 100, 60);
-		
 	}
 
 }

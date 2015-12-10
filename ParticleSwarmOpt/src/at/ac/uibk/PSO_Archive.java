@@ -2,12 +2,30 @@ package at.ac.uibk;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class PSO_Archive {
-	private int limit;
+	private final int limit;
 	private List<Particle> particles;
 	private SecureRandom sr = new SecureRandom();
+	
+	// comparator
+	private Comparator<Particle> comparator = new Comparator<Particle>() {
+		@Override
+		public int compare(Particle o1, Particle o2) {
+			double[] e1 = o1.getEval();
+			double[] e2 = o2.getEval();
+
+			if (e1[0] < e2[0])
+				return -1;
+			if (e2[0] < e1[0])
+				return 1;
+
+			return 0;
+		}
+	};
 
 	public PSO_Archive(int limit) {
 		this.limit = limit;
@@ -21,21 +39,32 @@ public class PSO_Archive {
 	}
 
 	public void insertParticle(Particle toInsert) {
-		for (Particle p : particles) {
-			if (p.isDominantTo(toInsert)) {
+		for (int i = 0; i < particles.size(); i++) {
+			Particle p = particles.get(i);
+			DominationStatus dom = toInsert.dominateable(p);
+
+			// if new particle is dominated, abort
+			if (dom.equals(DominationStatus.DOMINATED)) {
 				return;
 			}
-		}
-		if (particles.size() < limit) {
-			particles.add(toInsert);
-		} else {
-			if (this.removeParticleWithHighestDensity()) {
-				particles.add(toInsert);
+
+			// if dominates, remove dominated
+			if (dom.equals(DominationStatus.DOMINATES)) {
+				particles.remove(i);
+				i--;
 			}
+		}
+
+		particles.add(toInsert);
+
+		if (particles.size() >= limit) {
+			removeParticleWithHighestDensity();
 		}
 	}
 
 	public String toString() {
+		Collections.sort(particles, comparator);
+		
 		return particles.toString();
 	}
 
@@ -43,57 +72,35 @@ public class PSO_Archive {
 		return particles.size();
 	}
 
-	
-	//horrible code - needs to be written again
-	public boolean removeParticleWithHighestDensity() {
-		double[] density = new double[particles.size()];
-		for (int i = 0; i < particles.size(); i++) {
-			Particle p = particles.get(i);
-			double upperMinDist = Double.MAX_VALUE;
-			double lowerMinDist = Double.MAX_VALUE;
-			Particle upperNeighbor = null;
-			Particle lowerNeighbor = null;
-			for (Particle p2 : particles) {
-				double dist = Math.sqrt((p2.getEval()[0] - p.getEval()[0]) + (p2.getEval()[1] - p.getEval()[1]));
-				if (p2.getEval()[0] - p.getEval()[0] > 0 && p2.getEval()[1] - p.getEval()[1] > 0) {
-					if (dist < upperMinDist) {
-						upperMinDist = dist;
-						upperNeighbor = p2;
-					}
-				}
-				if (p2.getEval()[0] - p.getEval()[0] < 0 && p2.getEval()[1] - p.getEval()[1] < 0) {
-					if (dist < lowerMinDist) {
-						lowerMinDist = dist;
-						lowerNeighbor = p2;
-					}
-				}
-			}
+	// sort particles by first eval
 
-			if (upperNeighbor != null && lowerNeighbor != null) {
+	// horrible code - needs to be written again
+	public void removeParticleWithHighestDensity() {
 
-				density[i] = (upperNeighbor.getEval()[0] - lowerNeighbor.getEval()[0])
-						+ (upperNeighbor.getEval()[1] - lowerNeighbor.getEval()[1]);
-			} else {
-				System.out.println("Hallo");
-				density[i] = Double.MAX_VALUE;
+		// sort by one eval value, since all are pareto optimal (ideally)
+		// neighbors are automatically correct
+		Collections.sort(particles, comparator);
+
+		// max density on minimal rectangle size ~.~
+		double maxDens = Double.MAX_VALUE;
+		int toRemove = -1;
+
+		// smallest and biggest are an auto keep
+		for (int i = 1; i < particles.size() - 1; i++) {
+			double[] prev = particles.get(i - 1).getEval();
+			double[] next = particles.get(i + 1).getEval();
+
+			double x = next[0] - prev[0];
+			double y = prev[1] - next[1];
+
+			double dens = x * y;
+
+			if (dens < maxDens) {
+				maxDens = dens;
+				toRemove = i;
 			}
 		}
 
-		double min = Double.MAX_VALUE;
-		int index = -1;
-		for (int i = 0; i < density.length; i++) {
-			if (density[i] < min) {
-				min = density[i];
-				index = i;
-			}
-		}
-		if (index == -1) {
-			return false;
-		} else {
-			particles.remove(index);
-			System.out.println("Removed element with index " + index);
-		}
-		return true;
+		particles.remove(toRemove);
 	}
-
 }

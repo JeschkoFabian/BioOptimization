@@ -3,15 +3,16 @@ package at.ac.uibk;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.SecureRandom;
+import java.util.Arrays;
 
-public class Particle {
+public class Particle implements Dominatable<Particle> {
 	private double[] speed;
 	private double[] values;
 	private double[] eval;
 
 	// remember local best, dunno if getters are needed
 	private Particle best;
-	SecureRandom sr = new SecureRandom();
+	private SecureRandom sr = new SecureRandom();
 	private ZDT1 problem = new ZDT1();
 
 	public Particle() {
@@ -19,16 +20,21 @@ public class Particle {
 	}
 
 	private Particle(int num_vars) {
-		speed = new double[num_vars]; // default set to 0
+		speed = new double[num_vars]; // defaults to 0
 		values = new double[num_vars]; // randomize these vars
 		initValues();
-		eval();
-		best = this;
+		eval = problem.evaluate(values);
 
+		best = new Particle(this);
+	}
+
+	public Particle(Particle p) {
+		speed = Arrays.copyOf(p.getSpeed(), p.getSpeed().length);
+		values = Arrays.copyOf(p.getValues(), p.getValues().length);
+		eval = Arrays.copyOf(p.getEval(), p.getEval().length);
 	}
 
 	private void initValues() {
-
 		for (int i = 0; i < speed.length; i++) {
 			values[i] = sr.nextDouble();
 		}
@@ -46,51 +52,44 @@ public class Particle {
 				speed[i] *= -1;
 			}
 		}
-	}
 
-	
-	public boolean isDominantTo(Particle p2){
-		double[] eval1 = this.getEval();
-		double[] eval2 = p2.getEval();
-		for (int i = 0; i < eval1.length; i++) {
-			if (eval1[i] < eval2[i]) {
-				return false;
-			}
-		}
-		return true;	
+		eval = problem.evaluate(values);
+		updateBestValue();
 	}
 
 	public void updateBestValue() {
-		if (this.isDominantTo(best)) {
-			best = this;
-		}if(best.isDominantTo(this)){
+		DominationStatus dom = this.dominateable(best);
+
+		// positive is this dominates
+		if (dom.equals(DominationStatus.DOMINATES)) {
+			best = new Particle(this);
+		}
+		if (dom.equals(DominationStatus.DOMINATED)) {
 			return;
-		}else{
-			if(sr.nextBoolean()){
-				best= this;
-			}
+		}
+
+		if (dom.equals(DominationStatus.NONDOMINATABLE) && sr.nextBoolean()) {
+			best = new Particle(this);
 		}
 	}
 
 	public void updateSpeed(double[] bestGlobal) {
 		double r1 = sr.nextDouble();
 		double r2 = sr.nextDouble();
-		double C1 = 1.5 + (2 - 1.5) * sr.nextDouble();
-		double C2 = 1.5 + (2 - 1.5) * sr.nextDouble();
-		double W = 0.1 + (0.5 - 0.1) * sr.nextDouble();
+		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
+		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
+		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
 
 		for (int i = 0; i < speed.length; i++) {
-			speed[i] = W * speed[i] + C1 * r1 * (best.getValues()[i] - this.values[i])
-					+ C2 * r2 * (bestGlobal[i] - this.values[i]);
+			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i]) + c2 * r2
+					* (bestGlobal[i] - this.values[i]);
 		}
 	}
 
-	public void eval() {
-		eval = problem.evaluate(values);
-	}
-
+	// TODO: String.format
 	public String toString() {
-		return "(" + new BigDecimal(eval[0]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ", " + new BigDecimal(eval[1]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ")";
+		return "(" + new BigDecimal(eval[0]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ", "
+				+ new BigDecimal(eval[1]).setScale(2, RoundingMode.HALF_UP).doubleValue() + ")";
 	}
 
 	// ===========================================
@@ -116,4 +115,27 @@ public class Particle {
 		return eval;
 	}
 
+	@Override
+	public DominationStatus dominateable(Particle o) {
+		// returns negative if this is dominated, positive if the other and 0 if
+		// non
+		double[] e = o.getEval();
+
+		boolean isDominated = true;
+		boolean dominates = true;
+
+		for (int i = 0; i < eval.length; i++) {
+			if (eval[i] > e[i])
+				dominates = false;
+			
+			if (eval[i] < e[i])
+				isDominated = false;
+		}
+
+		if (dominates)
+			return DominationStatus.DOMINATES;
+		if (isDominated)
+			return DominationStatus.DOMINATED;
+		return DominationStatus.NONDOMINATABLE;
+	}
 }
