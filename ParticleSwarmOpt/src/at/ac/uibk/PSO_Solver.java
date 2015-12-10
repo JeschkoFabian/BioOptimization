@@ -9,7 +9,7 @@ public class PSO_Solver {
 	private List<Particle> swarm;
 	private PSO_Archive archive;
 
-	public void solve(int swarmSize, int archiveSize, int generationLimit) {
+	public List<Particle> solve(int swarmSize, int archiveSize, int generationLimit) {
 
 		// init stuff
 		MAX_GENERATION = generationLimit;
@@ -28,6 +28,7 @@ public class PSO_Solver {
 			System.out.println("Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1) + ": "
 					+ archive.toString());
 		}
+		return archive.getParticles();
 	}
 
 	private void updateArchive() {

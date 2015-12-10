@@ -103,4 +103,8 @@ public class PSO_Archive {
 
 		particles.remove(toRemove);
 	}
+
+	public List<Particle> getParticles() {
+		return this.particles;
+	}
 }
