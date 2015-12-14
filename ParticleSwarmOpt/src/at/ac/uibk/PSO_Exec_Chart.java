@@ -8,15 +8,14 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.stage.Stage;
 
-public class PSO_Exec_Chart extends Application{
-	
-	
+public class PSO_Exec_Chart extends Application {
+
 	private static List<Particle> result;
 
 	public static void main(String[] args) {
 
 		PSO_Solver solver = new PSO_Solver();
-		result = solver.solve(100, 100, 600);
+		result = solver.solve(100, 100, 1000, new ZDT4());
 		launch();
 	}
 
@@ -32,14 +31,14 @@ public class PSO_Exec_Chart extends Application{
 
 		lineChart.setTitle("Pareto Front");
 		// defining a series
-		XYChart.Series series = new XYChart.Series();
+		XYChart.Series<Number, Number> series = new XYChart.Series<>();
 		series.setName("Particles");
 		// populating the series with data
-		
-		for (Particle p : result){
-			series.getData().add(new XYChart.Data<>(p.getEval()[0], p.getEval()[1]));
+
+		for (Particle p : result) {
+			series.getData().add(new XYChart.Data<Number, Number>(p.getEval()[0], p.getEval()[1]));
 		}
-		
+
 		Scene scene = new Scene(lineChart, 800, 600);
 		lineChart.getData().add(series);
 

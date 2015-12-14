@@ -9,13 +9,15 @@ public class PSO_Solver {
 	private List<Particle> swarm;
 	private PSO_Archive archive;
 
-	public List<Particle> solve(int swarmSize, int archiveSize, int generationLimit) {
+	public List<Particle> solve(int swarmSize, int archiveSize, int generationLimit, ZDT problem) {
 
 		// init stuff
 		MAX_GENERATION = generationLimit;
-		initializeSwarm(swarmSize);
+		initializeSwarm(swarmSize, problem);
 		initializeArchive(archiveSize);
-		System.out.println("Archive: " + archive.toString());
+
+		String line = "Archive (" + (archive.getSize() + 1) + ") #0: " + archive.toString();
+		System.out.println(line);
 
 		for (int gen = 0; gen < MAX_GENERATION; gen++) {
 
@@ -25,8 +27,11 @@ public class PSO_Solver {
 				updatePosition(p);
 			}
 			updateArchive();
-			System.out.println("Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1) + ": "
-					+ archive.toString());
+
+			if (!line.endsWith(archive.toString())) {
+				line = "Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1) + ": " + archive.toString();
+				System.out.println(line);
+			}
 		}
 		return archive.getParticles();
 	}
@@ -57,10 +62,10 @@ public class PSO_Solver {
 
 	}
 
-	private void initializeSwarm(int size) {
+	private void initializeSwarm(int size, ZDT problem) {
 		swarm = new ArrayList<Particle>();
 		for (int i = 0; i < size; i++) {
-			Particle p = new Particle();
+			Particle p = new Particle(problem);
 			swarm.add(p);
 		}
 	}

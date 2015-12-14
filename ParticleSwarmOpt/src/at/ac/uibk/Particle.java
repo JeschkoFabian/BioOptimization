@@ -11,42 +11,48 @@ public class Particle implements Dominatable<Particle> {
 	// remember local best, dunno if getters are needed
 	private Particle best;
 	private SecureRandom sr = new SecureRandom();
-	private ZDT1 problem = new ZDT1();
+	private ZDT problem = new ZDT1();
 
-	public Particle() {
-		this(30);
-	}
-
-	private Particle(int num_vars) {
+	public Particle(ZDT problem) {
+		this.problem = problem;
+		int num_vars = problem.getNumberOfVariable();
+		
 		speed = new double[num_vars]; // defaults to 0
 		values = new double[num_vars]; // randomize these vars
 		initValues();
 		eval = problem.evaluate(values);
-
+		
 		best = new Particle(this);
 	}
+
 
 	public Particle(Particle p) {
 		speed = Arrays.copyOf(p.getSpeed(), p.getSpeed().length);
 		values = Arrays.copyOf(p.getValues(), p.getValues().length);
 		eval = Arrays.copyOf(p.getEval(), p.getEval().length);
+		problem = p.problem;
 	}
 
 	private void initValues() {
 		for (int i = 0; i < speed.length; i++) {
-			values[i] = sr.nextDouble();
+			double upper = problem.getUpperLimit()[i];
+			double lower = problem.getLowerLimit()[i];
+			
+			// get random double in the given range
+			// somehow this makes ZDT4 drastically worse compared to flat 0-1
+			values[i] = sr.nextDouble() * (upper - lower) + lower;
 		}
 	}
 
 	public void move() {
 		for (int i = 0; i < values.length; i++) {
 			values[i] += speed[i];
-			if (values[i] < problem.lowerLimit_[i]) {
-				values[i] = problem.lowerLimit_[i];
+			if (values[i] < problem.getLowerLimit()[i]) {
+				values[i] = problem.getLowerLimit()[i];
 				speed[i] *= -1;
 			}
-			if (values[i] > problem.upperLimit_[i]) {
-				values[i] = problem.upperLimit_[i];
+			if (values[i] > problem.getUpperLimit()[i]) {
+				values[i] = problem.getUpperLimit()[i];
 				speed[i] *= -1;
 			}
 		}
