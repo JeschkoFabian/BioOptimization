@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 public class PSO_Exec_Chart extends Application {
 
 	private static List<Particle> result;
-	private final String PROBLEM = "ZDT1";
+	private final String PROBLEM = "ZDT4";
 
 	public static void main(String[] args) {
 		launch();

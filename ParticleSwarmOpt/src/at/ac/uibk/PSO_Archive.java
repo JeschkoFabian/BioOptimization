@@ -38,12 +38,35 @@ public class PSO_Archive {
 		return particles.get(rand);
 	}
 
+	public Particle getProximityBest(int pos, int range) {
+		Collections.sort(particles, comparator);
+
+		int lower = pos - range < 1 ? 1 : pos - range;
+		int upper = pos + range > particles.size() - 1 ? particles.size() - 1 : pos + range;
+
+		// ignore first and last
+		int bestPos = lower;
+		double bestDens = calculateDensity(particles.get(bestPos - 1), particles.get(bestPos + 1));
+
+		for (int i = lower; i <= upper; i++) {
+			double nextDens = calculateDensity(particles.get(i - 1), particles.get(i + 1));
+
+			if (nextDens > bestDens) {
+				bestDens = nextDens;
+				bestPos = i;
+			}
+		}
+
+		return particles.get(bestPos);
+	}
+
 	public Particle getTournamentBest(int k) {
-		// can't really use tournament selection when less then k elements are selectable
-		if (particles.size() < k + 2){
+		// can't really use tournament selection when less then k elements are
+		// selectable
+		if (particles.size() < k + 2) {
 			return particles.get(sr.nextInt(particles.size()));
 		}
-		
+
 		Collections.sort(particles, comparator);
 
 		// ignore first and last
@@ -52,9 +75,9 @@ public class PSO_Archive {
 
 		for (int i = 1; i < k; i++) {
 			int randPos = sr.nextInt(particles.size() - 2) + 1;
-			double randDens = calculateDensity(particles.get(bestPos - 1), particles.get(bestPos + 1));
+			double randDens = calculateDensity(particles.get(randPos - 1), particles.get(randPos + 1));
 
-			if (randDens > bestDens){
+			if (randDens > bestDens) {
 				bestDens = randDens;
 				bestPos = randPos;
 			}

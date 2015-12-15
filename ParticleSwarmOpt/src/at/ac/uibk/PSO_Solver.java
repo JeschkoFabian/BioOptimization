@@ -1,9 +1,11 @@
 package at.ac.uibk;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PSO_Solver {
+	private SecureRandom sr = new SecureRandom();
 
 	private int MAX_GENERATION;
 	private List<Particle> swarm;
@@ -43,8 +45,12 @@ public class PSO_Solver {
 	}
 
 	private Particle selectLeader() {
-		return archive.getTournamentBest(1);
-//		return archive.getRandomBest();
+		if (sr.nextBoolean()) {
+			return archive.getTournamentBest(5);
+		} else {
+			// return archive.getProximityBest(pos, range)
+			return archive.getRandomBest();
+		}
 	}
 
 	private void initializeArchive(int limit) {
