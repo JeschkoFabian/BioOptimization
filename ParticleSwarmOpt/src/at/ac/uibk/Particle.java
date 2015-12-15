@@ -16,15 +16,14 @@ public class Particle implements Dominatable<Particle> {
 	public Particle(ZDT problem) {
 		this.problem = problem;
 		int num_vars = problem.getNumberOfVariable();
-		
+
 		speed = new double[num_vars]; // defaults to 0
 		values = new double[num_vars]; // randomize these vars
 		initValues();
 		eval = problem.evaluate(values);
-		
+
 		best = new Particle(this);
 	}
-
 
 	public Particle(Particle p) {
 		speed = Arrays.copyOf(p.getSpeed(), p.getSpeed().length);
@@ -37,7 +36,7 @@ public class Particle implements Dominatable<Particle> {
 		for (int i = 0; i < speed.length; i++) {
 			double upper = problem.getUpperLimit()[i];
 			double lower = problem.getLowerLimit()[i];
-			
+
 			// get random double in the given range
 			// somehow this makes ZDT4 drastically worse compared to flat 0-1
 			values[i] = sr.nextDouble() * (upper - lower) + lower;
@@ -77,16 +76,27 @@ public class Particle implements Dominatable<Particle> {
 		}
 	}
 
-	public void updateSpeed(double[] bestGlobal) {
+	public void updateSpeed(Particle bestGlobal) {
+		double[] globalValues = bestGlobal.getValues();
+
 		double r1 = sr.nextDouble();
 		double r2 = sr.nextDouble();
-		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
-		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
-		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
+		// double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
+		// double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
+		// double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
 
+		// for (int i = 0; i < speed.length; i++) {
+		// speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] -
+		// this.values[i]) + c2 * r2
+		// * (bestGlobal[i] - this.values[i]);
+		// }
+
+		// seems fine, w has a HUGE impact on the results, < 3 & > 6 gives gibberish
+		double w = (sr.nextDouble() / 5) + 0.35;
+		
 		for (int i = 0; i < speed.length; i++) {
-			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i]) + c2 * r2
-					* (bestGlobal[i] - this.values[i]);
+			speed[i] = w * speed[i] + 2 * r1 * (best.getValues()[i] - this.values[i]) + 2 * r2
+					* (globalValues[i] - this.values[i]);
 		}
 	}
 

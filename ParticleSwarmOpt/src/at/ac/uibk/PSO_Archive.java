@@ -10,7 +10,7 @@ public class PSO_Archive {
 	private final int limit;
 	private List<Particle> particles;
 	private SecureRandom sr = new SecureRandom();
-	
+
 	// comparator
 	private Comparator<Particle> comparator = new Comparator<Particle>() {
 		@Override
@@ -36,6 +36,31 @@ public class PSO_Archive {
 	public Particle getRandomBest() {
 		int rand = sr.nextInt(particles.size());
 		return particles.get(rand);
+	}
+
+	public Particle getTournamentBest(int k) {
+		// can't really use tournament selection when less then k elements are selectable
+		if (particles.size() < k + 2){
+			return particles.get(sr.nextInt(particles.size()));
+		}
+		
+		Collections.sort(particles, comparator);
+
+		// ignore first and last
+		int bestPos = sr.nextInt(particles.size() - 2) + 1;
+		double bestDens = calculateDensity(particles.get(bestPos - 1), particles.get(bestPos + 1));
+
+		for (int i = 1; i < k; i++) {
+			int randPos = sr.nextInt(particles.size() - 2) + 1;
+			double randDens = calculateDensity(particles.get(bestPos - 1), particles.get(bestPos + 1));
+
+			if (randDens > bestDens){
+				bestDens = randDens;
+				bestPos = randPos;
+			}
+		}
+
+		return particles.get(bestPos);
 	}
 
 	public void insertParticle(Particle toInsert) {
@@ -64,7 +89,7 @@ public class PSO_Archive {
 
 	public String toString() {
 		Collections.sort(particles, comparator);
-		
+
 		return particles.toString();
 	}
 
@@ -73,6 +98,15 @@ public class PSO_Archive {
 	}
 
 	// sort particles by first eval
+	private double calculateDensity(Particle prev, Particle next) {
+		double dens = 1;
+
+		for (int i = 0; i < prev.getEval().length; i++) {
+			dens *= Math.abs((next.getEval()[i] - prev.getEval()[i]));
+		}
+
+		return dens;
+	}
 
 	// horrible code - needs to be written again
 	public void removeParticleWithHighestDensity() {
@@ -87,13 +121,10 @@ public class PSO_Archive {
 
 		// smallest and biggest are an auto keep
 		for (int i = 1; i < particles.size() - 1; i++) {
-			double[] prev = particles.get(i - 1).getEval();
-			double[] next = particles.get(i + 1).getEval();
+			Particle prev = particles.get(i - 1);
+			Particle next = particles.get(i + 1);
 
-			double x = next[0] - prev[0];
-			double y = prev[1] - next[1];
-
-			double dens = x * y;
+			double dens = calculateDensity(prev, next);
 
 			if (dens < maxDens) {
 				maxDens = dens;

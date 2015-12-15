@@ -11,17 +11,27 @@ import javafx.stage.Stage;
 public class PSO_Exec_Chart extends Application {
 
 	private static List<Particle> result;
+	private final String PROBLEM = "ZDT1";
 
 	public static void main(String[] args) {
-
-		PSO_Solver solver = new PSO_Solver();
-		result = solver.solve(100, 100, 1000, new ZDT4());
 		launch();
 	}
 
 	@Override
 	public void start(Stage stage) {
-		stage.setTitle("Pareto Front for ZDT1");
+		PSO_Solver solver = new PSO_Solver();
+
+		int swarmSize = 100;
+		int archiveSize = 100;
+		int generations = 1000;
+		if (PROBLEM.equals("ZDT1")) {
+			result = solver.solve(swarmSize, archiveSize, generations, new ZDT1());
+			stage.setTitle("Pareto Front for ZDT1");
+		} else {
+			result = solver.solve(swarmSize, archiveSize, generations, new ZDT4());
+			stage.setTitle("Pareto Front for ZDT4");
+		}
+
 		// defining the axes
 		final NumberAxis xAxis = new NumberAxis();
 		final NumberAxis yAxis = new NumberAxis();

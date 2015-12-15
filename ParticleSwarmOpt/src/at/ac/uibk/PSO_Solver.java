@@ -43,7 +43,8 @@ public class PSO_Solver {
 	}
 
 	private Particle selectLeader() {
-		return archive.getRandomBest();
+		return archive.getTournamentBest(1);
+//		return archive.getRandomBest();
 	}
 
 	private void initializeArchive(int limit) {
@@ -58,7 +59,7 @@ public class PSO_Solver {
 	}
 
 	private void computeSpeed(Particle p, Particle randomBest) {
-		p.updateSpeed(randomBest.getValues());
+		p.updateSpeed(randomBest);
 
 	}
 
