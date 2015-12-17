@@ -38,26 +38,43 @@ public class PSO_Archive {
 		return particles.get(rand);
 	}
 
-	public Particle getProximityBest(int pos, int range) {
-		Collections.sort(particles, comparator);
+	/**
+	 * Something along the lines of get the x closest particles to, then choose
+	 * random
+	 */
+	public Particle getProximityBest(Particle p, int x) {
+		Collections.sort(particles, new Comparator<Particle>() {
 
-		int lower = pos - range < 1 ? 1 : pos - range;
-		int upper = pos + range > particles.size() - 1 ? particles.size() - 1 : pos + range;
+			@Override
+			public int compare(Particle o1, Particle o2) {
+				double dist1 = 0;
+				double dist2 = 0;
 
-		// ignore first and last
-		int bestPos = lower;
-		double bestDens = calculateDensity(particles.get(bestPos - 1), particles.get(bestPos + 1));
+				for (int i = 0; i < p.getEval().length; i++) {
+					dist1 += Math.abs(o1.getEval()[i] - p.getEval()[i]);
+					dist2 += Math.abs(o2.getEval()[i] - p.getEval()[i]);
+				}
 
-		for (int i = lower; i <= upper; i++) {
-			double nextDens = calculateDensity(particles.get(i - 1), particles.get(i + 1));
+				dist1 /= p.getEval().length;
+				dist2 /= p.getEval().length;
 
-			if (nextDens > bestDens) {
-				bestDens = nextDens;
-				bestPos = i;
+				if (dist1 < dist2) {
+					return -1;
+				}
+				if (dist2 < dist1) {
+					return 1;
+				}
+
+				return 0;
 			}
+		});
+
+		int rand = sr.nextInt(x);
+		if (rand >= particles.size()) {
+			rand = particles.size() - 1;
 		}
 
-		return particles.get(bestPos);
+		return particles.get(rand);
 	}
 
 	public Particle getTournamentBest(int k) {
@@ -86,14 +103,14 @@ public class PSO_Archive {
 		return particles.get(bestPos);
 	}
 
-	public void insertParticle(Particle toInsert) {
+	public boolean insertParticle(Particle toInsert) {
 		for (int i = 0; i < particles.size(); i++) {
 			Particle p = particles.get(i);
 			DominationStatus dom = toInsert.compareTo(p);
 
 			// if new particle is dominated, abort
 			if (dom.equals(DominationStatus.DOMINATED)) {
-				return;
+				return false;
 			}
 
 			// if dominates, remove dominated
@@ -108,6 +125,8 @@ public class PSO_Archive {
 		if (particles.size() >= limit) {
 			removeParticleWithHighestDensity();
 		}
+
+		return true;
 	}
 
 	public String toString() {

@@ -8,7 +8,7 @@ public class Particle implements Dominatable<Particle> {
 	private double[] values;
 	private double[] eval;
 
-	// remember local best, dunno if getters are needed
+	// remember local best
 	private Particle best;
 	private SecureRandom sr = new SecureRandom();
 	private ZDT problem = new ZDT1();
@@ -81,21 +81,29 @@ public class Particle implements Dominatable<Particle> {
 
 		double r1 = sr.nextDouble();
 		double r2 = sr.nextDouble();
-		// double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
-		// double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
-		// double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
 
-		// for (int i = 0; i < speed.length; i++) {
-		// speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] -
-		// this.values[i]) + c2 * r2
-		// * (bestGlobal[i] - this.values[i]);
-		// }
-
-		// seems fine, w has a HUGE impact on the results, < 3 & > 6 gives gibberish
+		// seems fine, w has a HUGE impact on the results, < 3 & > 6 gives
+		// gibberish
 		double w = (sr.nextDouble() / 5) + 0.35;
-		
+
 		for (int i = 0; i < speed.length; i++) {
 			speed[i] = w * speed[i] + 2 * r1 * (best.getValues()[i] - this.values[i]) + 2 * r2
+					* (globalValues[i] - this.values[i]);
+		}
+	}
+
+	// TODO: create a more drastic speed function for the case of being stuck in a local optimum
+	public void updateSpeed2(Particle bestGlobal) {
+		double[] globalValues = bestGlobal.getValues();
+
+		double r1 = sr.nextDouble();
+		double r2 = sr.nextDouble();
+		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
+		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
+		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
+
+		for (int i = 0; i < speed.length; i++) {
+			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i]) + c2 * r2
 					* (globalValues[i] - this.values[i]);
 		}
 	}

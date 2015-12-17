@@ -2,6 +2,8 @@ package at.ac.uibk;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class PSO_Solver {
@@ -18,23 +20,44 @@ public class PSO_Solver {
 		initializeSwarm(swarmSize, problem);
 		initializeArchive(archiveSize);
 
-		String line = "Archive (" + (archive.getSize() + 1) + ") #0: " + archive.toString();
-		System.out.println(line);
+		// String line = "Archive (" + (archive.getSize() + 1) + ") #0: " +
+		// archive.toString();
+		// System.out.println(line);
 
 		for (int gen = 0; gen < MAX_GENERATION; gen++) {
+			Collections.sort(swarm, new Comparator<Particle>() {
+				@Override
+				public int compare(Particle o1, Particle o2) {
+					double[] e1 = o1.getEval();
+					double[] e2 = o2.getEval();
+
+					if (e1[0] < e2[0])
+						return -1;
+					if (e2[0] < e1[0])
+						return 1;
+
+					return 0;
+				}
+			});
 
 			for (Particle p : swarm) {
-				Particle randomBest = selectLeader();
+				Particle randomBest = selectLeader(p);
 				computeSpeed(p, randomBest);
 				updatePosition(p);
 			}
 			updateArchive();
 
-			if (!line.endsWith(archive.toString())) {
-				line = "Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1) + ": " + archive.toString();
-				System.out.println(line);
-			}
+			// removed due to bad performance and for mor readability
+			// if (!line.endsWith(archive.toString())) {
+			// line = "Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1)
+			// + ": " + archive.toString();
+			// System.out.println(line);
+			// }
 		}
+
+		String line = "Archive (" + (archive.getSize() + 1) + "): " + archive.toString();
+		System.out.println(line);
+
 		return archive.getParticles();
 	}
 
@@ -44,12 +67,16 @@ public class PSO_Solver {
 		}
 	}
 
-	private Particle selectLeader() {
+	private Particle selectLeader(Particle p) {
 		if (sr.nextBoolean()) {
 			return archive.getTournamentBest(5);
 		} else {
-			// return archive.getProximityBest(pos, range)
-			return archive.getRandomBest();
+			// funnily this improved the performance, however
+			// both as 10 did not work that great
+			// return archive.getTournamentBest(10);
+
+			// not really a big upgrade
+			return archive.getProximityBest(p, 10);
 		}
 	}
 
@@ -65,8 +92,10 @@ public class PSO_Solver {
 	}
 
 	private void computeSpeed(Particle p, Particle randomBest) {
+		// if (sr.nextBoolean())
 		p.updateSpeed(randomBest);
-
+		// else
+		// p.updateSpeed2(randomBest);
 	}
 
 	private void initializeSwarm(int size, ZDT problem) {
