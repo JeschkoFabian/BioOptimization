@@ -42,7 +42,7 @@ public class PSO_Solver {
 
 			for (Particle p : swarm) {
 				Particle randomBest = selectLeader(p);
-				computeSpeed(p, randomBest);
+				computeSpeed(p, randomBest, gen);
 				updatePosition(p);
 			}
 			updateArchive();
@@ -91,11 +91,18 @@ public class PSO_Solver {
 		p.move();
 	}
 
-	private void computeSpeed(Particle p, Particle randomBest) {
-		// if (sr.nextBoolean())
-		p.updateSpeed(randomBest);
-		// else
-		// p.updateSpeed2(randomBest);
+	/**
+	 * Now with simulated annealing. First iteration has a 1/8 chance of not
+	 * updating the speed, ever decreasing.
+	 * 
+	 * @param p
+	 * @param randomBest
+	 * @param generation
+	 */
+	private void computeSpeed(Particle p, Particle randomBest, int generation) {
+		double chance = sr.nextDouble() * 8;
+		if (chance >= (1 - generation / MAX_GENERATION))
+			p.updateSpeed(randomBest);
 	}
 
 	private void initializeSwarm(int size, ZDT problem) {
