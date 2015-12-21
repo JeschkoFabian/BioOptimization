@@ -100,7 +100,7 @@ public class PSO_Solver {
 	 * @param generation
 	 */
 	private void computeSpeed(Particle p, Particle randomBest, int generation) {
-		double chance = sr.nextDouble() * 8;
+		double chance = sr.nextDouble() * 5;
 		if (chance >= (1 - generation / MAX_GENERATION))
 			p.updateSpeed(randomBest);
 	}
