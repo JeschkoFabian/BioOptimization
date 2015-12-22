@@ -132,7 +132,9 @@ public class PSO_Archive {
 	public String toString() {
 		Collections.sort(particles, comparator);
 
-		return particles.toString();
+		String ret = String.format("Archive (%3d): " + particles.toString(), (particles.size() + 1));
+
+		return ret;
 	}
 
 	public int getSize() {

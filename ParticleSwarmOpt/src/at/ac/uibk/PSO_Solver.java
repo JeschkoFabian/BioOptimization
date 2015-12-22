@@ -55,8 +55,7 @@ public class PSO_Solver {
 			// }
 		}
 
-		String line = "Archive (" + (archive.getSize() + 1) + "): " + archive.toString();
-		System.out.println(line);
+		System.out.println(archive.toString());
 
 		return archive.getParticles();
 	}

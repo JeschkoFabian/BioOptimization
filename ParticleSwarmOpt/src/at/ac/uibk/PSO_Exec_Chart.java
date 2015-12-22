@@ -26,7 +26,6 @@ import javafx.stage.Stage;
  *
  */
 public class PSO_Exec_Chart extends Application {
-	private static List<Particle> result;
 	private static final String PROBLEM = "ZDT4";
 
 	private static final int GRAPHS_VERTICAL = 2;
@@ -52,7 +51,7 @@ public class PSO_Exec_Chart extends Application {
 		int total = GRAPHS_HORIZONTAL * GRAPHS_VERTICAL;
 		GridPane grid = new GridPane();
 		ExecutorService es = Executors.newFixedThreadPool(total);
-		
+
 		// use concurrent list because of thread safety
 		List<LineChart<Number, Number>> charts = Collections.synchronizedList(new ArrayList<>());
 
@@ -66,51 +65,52 @@ public class PSO_Exec_Chart extends Application {
 
 		System.out.println("Starting computation of the " + PROBLEM + " problem with " + total + " threads.\n");
 
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+
+				final PSO_Solver solver = new PSO_Solver();
+				final List<Particle> result = solver.solve(SWARM_SZ, ARCHIVE_SZ, GENERATIONS, zdt);
+
+				// defining the axes
+				final NumberAxis xAxis = new NumberAxis();
+				final NumberAxis yAxis = new NumberAxis();
+
+				// weird, scaling the axis changes the whole graph
+				// scaling
+				// xAxis.setAutoRanging(false);
+				// yAxis.setAutoRanging(false);
+
+				xAxis.setLowerBound(0);
+				xAxis.setUpperBound(1.05);
+
+				yAxis.setLowerBound(result.get(result.size() - 1).getEval()[1] - 0.05);
+				yAxis.setUpperBound(result.get(0).getEval()[1] + 0.05);
+
+				// xAxis.setLabel("X");
+				// creating the chart
+				final LineChart<Number, Number> lineChart = new LineChart<Number, Number>(xAxis, yAxis);
+
+				lineChart.setTitle("Pareto Front");
+				// defining a series
+				XYChart.Series<Number, Number> series = new XYChart.Series<>();
+				// series.setName("Particles");
+				// populating the series with data
+
+				for (Particle p : result) {
+					series.getData().add(new XYChart.Data<Number, Number>(p.getEval()[0], p.getEval()[1]));
+				}
+				lineChart.getData().add(series);
+				lineChart.setLegendVisible(false);
+
+				// can't be added directly because javaFX does not support
+				// thread safety
+				charts.add(lineChart);
+			}
+		};
+
 		for (int i = 0; i < GRAPHS_HORIZONTAL; i++) {
 			for (int j = 0; j < GRAPHS_VERTICAL; j++) {
-
-				Runnable r = new Runnable() {
-					@Override
-					public void run() {
-						PSO_Solver solver = new PSO_Solver();
-						result = solver.solve(SWARM_SZ, ARCHIVE_SZ, GENERATIONS, zdt);
-
-						// defining the axes
-						final NumberAxis xAxis = new NumberAxis();
-						final NumberAxis yAxis = new NumberAxis();
-
-						// weird, scaling the axis changes the whole graph
-						// scaling
-						// xAxis.setAutoRanging(false);
-						// yAxis.setAutoRanging(false);
-
-						xAxis.setLowerBound(0);
-						xAxis.setUpperBound(1.05);
-
-						yAxis.setLowerBound(result.get(result.size() - 1).getEval()[1] - 0.05);
-						yAxis.setUpperBound(result.get(0).getEval()[1] + 0.05);
-
-						// xAxis.setLabel("X");
-						// creating the chart
-						final LineChart<Number, Number> lineChart = new LineChart<Number, Number>(xAxis, yAxis);
-
-						lineChart.setTitle("Pareto Front");
-						// defining a series
-						XYChart.Series<Number, Number> series = new XYChart.Series<>();
-						// series.setName("Particles");
-						// populating the series with data
-
-						for (Particle p : result) {
-							series.getData().add(new XYChart.Data<Number, Number>(p.getEval()[0], p.getEval()[1]));
-						}
-						lineChart.getData().add(series);
-						lineChart.setLegendVisible(false);
-
-						// can't be added directly because javaFX does not support thread safety
-						charts.add(lineChart);
-					}
-				};
-
 				es.execute(r);
 			}
 		}
