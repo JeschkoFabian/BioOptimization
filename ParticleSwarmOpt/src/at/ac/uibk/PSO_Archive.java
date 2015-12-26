@@ -42,7 +42,7 @@ public class PSO_Archive {
 	 * Something along the lines of get the x closest particles to, then choose
 	 * random
 	 */
-	public Particle getProximityBest(Particle p, int x) {
+	public Particle getProximityBest(final Particle p, int x) {
 		Collections.sort(particles, new Comparator<Particle>() {
 
 			@Override

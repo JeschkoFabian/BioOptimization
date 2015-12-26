@@ -47,13 +47,13 @@ public class PSO_Exec_Chart extends Application {
 	@Override
 	public void start(Stage stage) {
 
-		ZDT zdt;
+		final ZDT zdt;
 		int total = GRAPHS_HORIZONTAL * GRAPHS_VERTICAL;
 		GridPane grid = new GridPane();
 		ExecutorService es = Executors.newFixedThreadPool(total);
 
 		// use concurrent list because of thread safety
-		List<LineChart<Number, Number>> charts = Collections.synchronizedList(new ArrayList<>());
+		final List<LineChart<Number, Number>> charts = Collections.synchronizedList(new ArrayList<LineChart<Number, Number>>());
 
 		if (PROBLEM.equals("ZDT1")) {
 			stage.setTitle("Pareto Front for ZDT1");
