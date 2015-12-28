@@ -13,6 +13,13 @@ public class Particle implements Dominatable<Particle> {
 	private SecureRandom sr = new SecureRandom();
 	private ZDT problem = new ZDT1();
 
+	/**
+	 * Creates a new particle with speed 0 and random values for a given
+	 * problem.
+	 * 
+	 * @param problem
+	 *            The problem
+	 */
 	public Particle(ZDT problem) {
 		this.problem = problem;
 		int num_vars = problem.getNumberOfVariable();
@@ -25,6 +32,13 @@ public class Particle implements Dominatable<Particle> {
 		best = new Particle(this);
 	}
 
+	/**
+	 * Creates a new particle with the same attributes as an existing one (Used
+	 * to avoid memory issues with arrays).
+	 * 
+	 * @param p
+	 *            The already existing particle
+	 */
 	public Particle(Particle p) {
 		speed = Arrays.copyOf(p.getSpeed(), p.getSpeed().length);
 		values = Arrays.copyOf(p.getValues(), p.getValues().length);
@@ -32,6 +46,10 @@ public class Particle implements Dominatable<Particle> {
 		problem = p.problem;
 	}
 
+	/**
+	 * The values of a particle are set to random numbers between the lower and
+	 * the upper limit of the problem.
+	 */
 	private void initValues() {
 		for (int i = 0; i < speed.length; i++) {
 			double upper = problem.getUpperLimit()[i];
@@ -43,6 +61,10 @@ public class Particle implements Dominatable<Particle> {
 		}
 	}
 
+	/**
+	 * The particles values are changed according to its speed, with
+	 * consideration of the lower and upper limits of the problem.
+	 */
 	public void move() {
 		for (int i = 0; i < values.length; i++) {
 			values[i] += speed[i];
@@ -60,6 +82,12 @@ public class Particle implements Dominatable<Particle> {
 		updateBestValue();
 	}
 
+	/**
+	 * If the current position of the particle is better than the previous best,
+	 * the current particle is saved as the new best. If it is worse, nothing
+	 * happens. And if its neither better or worse the current particle replaces
+	 * the best with a probability of 50%
+	 */
 	public void updateBestValue() {
 		DominationStatus dom = this.compareTo(best);
 
@@ -76,6 +104,14 @@ public class Particle implements Dominatable<Particle> {
 		}
 	}
 
+	/**
+	 * The speed of the particle is changed according to a certain formula,
+	 * which considers an already "good" particle.
+	 * 
+	 * 
+	 * @param bestGlobal
+	 *            The "good" particle
+	 */
 	public void updateSpeed(Particle bestGlobal) {
 		double[] globalValues = bestGlobal.getValues();
 
@@ -87,26 +123,27 @@ public class Particle implements Dominatable<Particle> {
 		double w = (sr.nextDouble() / 5) + 0.35;
 
 		for (int i = 0; i < speed.length; i++) {
-			speed[i] = w * speed[i] + 2 * r1 * (best.getValues()[i] - this.values[i]) + 2 * r2
-					* (globalValues[i] - this.values[i]);
+			speed[i] = w * speed[i] + 2 * r1 * (best.getValues()[i] - this.values[i])
+					+ 2 * r2 * (globalValues[i] - this.values[i]);
 		}
 	}
 
-	// TODO: create a more drastic speed function for the case of being stuck in a local optimum
-	public void updateSpeed2(Particle bestGlobal) {
-		double[] globalValues = bestGlobal.getValues();
-
-		double r1 = sr.nextDouble();
-		double r2 = sr.nextDouble();
-		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
-		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
-		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
-
-		for (int i = 0; i < speed.length; i++) {
-			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i]) + c2 * r2
-					* (globalValues[i] - this.values[i]);
-		}
-	}
+	// TODO: create a more drastic speed function for the case of being stuck in
+	// a local optimum
+//	public void updateSpeed2(Particle bestGlobal) {
+//		double[] globalValues = bestGlobal.getValues();
+//
+//		double r1 = sr.nextDouble();
+//		double r2 = sr.nextDouble();
+//		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
+//		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
+//		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
+//
+//		for (int i = 0; i < speed.length; i++) {
+//			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i])
+//					+ c2 * r2 * (globalValues[i] - this.values[i]);
+//		}
+//	}
 
 	// ===========================================
 	// getters & setters

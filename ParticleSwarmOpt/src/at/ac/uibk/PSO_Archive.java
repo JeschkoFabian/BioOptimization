@@ -27,20 +27,34 @@ public class PSO_Archive {
 		}
 	};
 
+	/**
+	 * Initializes a new archive with a certain limit of particles.
+	 * 
+	 * @param limit
+	 *            The limit
+	 */
 	public PSO_Archive(int limit) {
 		this.limit = limit;
 		particles = new ArrayList<Particle>();
 	}
 
-	// add instead get best with farthest neighbors
+	/**
+	 * Selects a random particle and returns it.
+	 * 
+	 * @return The random particle
+	 */
 	public Particle getRandomBest() {
 		int rand = sr.nextInt(particles.size());
 		return particles.get(rand);
 	}
 
+
 	/**
-	 * Something along the lines of get the x closest particles to, then choose
-	 * random
+	 * Gets the x closest particles to a particle, and selects (and returns) one of them randomly.
+	 * 
+	 * @param p The initial particle
+	 * @param x The number of particles considered
+	 * @return A random particle out of x particles.
 	 */
 	public Particle getProximityBest(final Particle p, int x) {
 		Collections.sort(particles, new Comparator<Particle>() {
@@ -77,6 +91,12 @@ public class PSO_Archive {
 		return particles.get(rand);
 	}
 
+	/**
+	 * Searches the best particle (with lowest density) out of k particles and returns it.
+	 * 
+	 * @param k The number of participating particles in the tournament.
+	 * @return The best particle found
+	 */
 	public Particle getTournamentBest(int k) {
 		// can't really use tournament selection when less then k elements are
 		// selectable
@@ -103,6 +123,15 @@ public class PSO_Archive {
 		return particles.get(bestPos);
 	}
 
+	/**
+	 * Inserts a particle into the archive if it is not dominated by any
+	 * existing member (All particles dominated by the new inserted particle are
+	 * removed immediately). If the archive is full, then the particle with the
+	 * highest density is removed.
+	 * 
+	 * @param toInsert The particle
+	 * @return true if the particle was inserted; false if not.
+	 */
 	public boolean insertParticle(Particle toInsert) {
 		for (int i = 0; i < particles.size(); i++) {
 			Particle p = particles.get(i);
@@ -141,7 +170,16 @@ public class PSO_Archive {
 		return particles.size();
 	}
 
-	// sort particles by first eval
+	/**
+	 * Calculates the density for a particle with the help of the previous and
+	 * the next particle.
+	 * 
+	 * @param prev
+	 *            The previous particle
+	 * @param next
+	 *            The next particle
+	 * @return The density
+	 */
 	private double calculateDensity(Particle prev, Particle next) {
 		double dens = 1;
 
@@ -152,14 +190,16 @@ public class PSO_Archive {
 		return dens;
 	}
 
-	// horrible code - needs to be written again
+	/**
+	 * Removes the particle with the highest density
+	 */
 	public void removeParticleWithHighestDensity() {
 
 		// sort by one eval value, since all are pareto optimal (ideally)
 		// neighbors are automatically correct
 		Collections.sort(particles, comparator);
 
-		// max density on minimal rectangle size ~.~
+		// max density on minimal rectangle size
 		double maxDens = Double.MAX_VALUE;
 		int toRemove = -1;
 

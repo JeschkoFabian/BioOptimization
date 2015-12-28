@@ -13,6 +13,26 @@ public class PSO_Solver {
 	private List<Particle> swarm;
 	private PSO_Archive archive;
 
+	/**
+	 * This method contains the whole algorithm. A swarm and an archive are
+	 * initialized, which are then used to calculate the best solution for our
+	 * problem within a certain number of iterations. In order to do so we
+	 * update the speed and the position of each particle in the swarm in every
+	 * iteration, with the goal of getting better positions. Then the archive is
+	 * updated with the updated particles. This goes on until we have reached
+	 * the generation limit. Then the archive is returned.
+	 * 
+	 * 
+	 * @param swarmSize
+	 *            The size of the swarm
+	 * @param archiveSize
+	 *            The size of the archive
+	 * @param generationLimit
+	 *            The maximum number of generations of the swarm
+	 * @param problem
+	 *            The problem to solve
+	 * @return The archive with the best particles found
+	 */
 	public List<Particle> solve(int swarmSize, int archiveSize, int generationLimit, ZDT problem) {
 
 		// init stuff
@@ -41,18 +61,11 @@ public class PSO_Solver {
 			});
 
 			for (Particle p : swarm) {
-				Particle randomBest = selectLeader(p);
-				computeSpeed(p, randomBest, gen);
+				computeSpeed(p, selectLeader(p), gen);
 				updatePosition(p);
 			}
 			updateArchive();
 
-			// removed due to bad performance and for mor readability
-			// if (!line.endsWith(archive.toString())) {
-			// line = "Archive (" + (archive.getSize() + 1) + ") #" + (gen + 1)
-			// + ": " + archive.toString();
-			// System.out.println(line);
-			// }
 		}
 
 		System.out.println(archive.toString());
@@ -60,12 +73,25 @@ public class PSO_Solver {
 		return archive.getParticles();
 	}
 
+	/**
+	 * Every particle of the swarm has a chance to get inserted into the
+	 * archive. Only particles, which are not dominated by existing members of
+	 * the archive are inserted at last.
+	 */
 	private void updateArchive() {
 		for (int i = 0; i < swarm.size(); i++) {
 			archive.insertParticle(swarm.get(i));
 		}
 	}
 
+	/**
+	 * A leader (which is "followed" by other particles) gets selected by one of
+	 * two methods (decided randomly).
+	 * 
+	 * @param p
+	 *            The particle which searches a leader.
+	 * @return The leader
+	 */
 	private Particle selectLeader(Particle p) {
 		if (sr.nextBoolean()) {
 			return archive.getTournamentBest(5);
@@ -79,6 +105,15 @@ public class PSO_Solver {
 		}
 	}
 
+	/**
+	 * The archive is initialized with a certain limit of members. Then every
+	 * particle of the swarm has a chance to get inserted into the archive. Only
+	 * particles, which are not dominated by existing members of the archive are
+	 * inserted at last.
+	 * 
+	 * @param limit
+	 *            The limit
+	 */
 	private void initializeArchive(int limit) {
 		archive = new PSO_Archive(limit);
 		for (Particle p : swarm) {
@@ -86,6 +121,11 @@ public class PSO_Solver {
 		}
 	}
 
+	/**
+	 * The position of a particle is changed by moving it according to its speed.
+	 * 
+	 * @param p The particle
+	 */
 	private void updatePosition(Particle p) {
 		p.move();
 	}
@@ -104,6 +144,12 @@ public class PSO_Solver {
 			p.updateSpeed(randomBest);
 	}
 
+	/**
+	 * The swarm is initialized with a certain number of random particles.
+	 * 
+	 * @param size The number of particles in the swarm
+	 * @param problem The problem to solve
+	 */
 	private void initializeSwarm(int size, ZDT problem) {
 		swarm = new ArrayList<Particle>();
 		for (int i = 0; i < size; i++) {
