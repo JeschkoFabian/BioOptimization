@@ -70,11 +70,13 @@ public class Particle implements Dominatable<Particle> {
 			values[i] += speed[i];
 			if (values[i] < problem.getLowerLimit()[i]) {
 				values[i] = problem.getLowerLimit()[i];
-				speed[i] *= -1;
+//				speed[i] *= -1;
+				speed[i] = 0.001;
 			}
 			if (values[i] > problem.getUpperLimit()[i]) {
 				values[i] = problem.getUpperLimit()[i];
-				speed[i] *= -1;
+//				speed[i] *= -1;
+				speed[i] = -0.001;
 			}
 		}
 
@@ -118,32 +120,52 @@ public class Particle implements Dominatable<Particle> {
 		double r1 = sr.nextDouble();
 		double r2 = sr.nextDouble();
 
-		// seems fine, w has a HUGE impact on the results, < 3 & > 6 gives
-		// gibberish
-		double w = (sr.nextDouble() / 5) + 0.35;
+		double c1 = 1.5 + sr.nextDouble();
+		double c2 = 1.5 + sr.nextDouble();
+
+//		double c1 = 1.5 + sr.nextDouble()/2;
+//		double c2 = 1.5 + sr.nextDouble()/2;
+		
+		// according to papers 0.4 to 0.9 are good weights
+		double w = (sr.nextDouble() / 2) + 0.4;
 
 		for (int i = 0; i < speed.length; i++) {
-			speed[i] = w * speed[i] + 2 * r1 * (best.getValues()[i] - this.values[i])
-					+ 2 * r2 * (globalValues[i] - this.values[i]);
+			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i]) + c2 * r2
+					* (globalValues[i] - this.values[i]);
+
+			// constrict speed
+			double tmp = (c1 + c2 > 4) ? c1 + c2 : 0;
+			double constrict = 2 / (2 - tmp - Math.sqrt(tmp * tmp - 4 * tmp));
+			speed[i] *= Math.abs(constrict);
+
+			// constrain speed
+			double limit = (problem.getUpperLimit()[i] - problem.getLowerLimit()[i])/2;
+			if (speed[i] > limit) {
+				speed[i] = limit;
+			}
+			if (speed[i] < -limit) {
+				speed[i] = -limit;
+			}
 		}
 	}
 
 	// TODO: create a more drastic speed function for the case of being stuck in
 	// a local optimum
-//	public void updateSpeed2(Particle bestGlobal) {
-//		double[] globalValues = bestGlobal.getValues();
-//
-//		double r1 = sr.nextDouble();
-//		double r2 = sr.nextDouble();
-//		double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
-//		double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
-//		double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
-//
-//		for (int i = 0; i < speed.length; i++) {
-//			speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] - this.values[i])
-//					+ c2 * r2 * (globalValues[i] - this.values[i]);
-//		}
-//	}
+	// public void updateSpeed2(Particle bestGlobal) {
+	// double[] globalValues = bestGlobal.getValues();
+	//
+	// double r1 = sr.nextDouble();
+	// double r2 = sr.nextDouble();
+	// double c1 = 1.5 + (2 - 1.5) * sr.nextDouble(); // 2 - first constant
+	// double c2 = 1.5 + (2 - 1.5) * sr.nextDouble();
+	// double w = 0.1 + (0.5 - 0.1) * sr.nextDouble();
+	//
+	// for (int i = 0; i < speed.length; i++) {
+	// speed[i] = w * speed[i] + c1 * r1 * (best.getValues()[i] -
+	// this.values[i])
+	// + c2 * r2 * (globalValues[i] - this.values[i]);
+	// }
+	// }
 
 	// ===========================================
 	// getters & setters

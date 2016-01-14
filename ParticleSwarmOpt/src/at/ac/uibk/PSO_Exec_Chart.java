@@ -38,7 +38,7 @@ public class PSO_Exec_Chart extends Application {
 	// gets stuck after 800-1500 gens, so more is useless
 	// in case of annealing, bigger gen number is actually great, but still has
 	// diminishing returns after a few thousand
-	private static final int GENERATIONS = 5000;
+	private static final int GENERATIONS = 250;
 
 	public static void main(String[] args) {
 		launch();
@@ -53,7 +53,8 @@ public class PSO_Exec_Chart extends Application {
 		ExecutorService es = Executors.newFixedThreadPool(total);
 
 		// use concurrent list because of thread safety
-		final List<LineChart<Number, Number>> charts = Collections.synchronizedList(new ArrayList<LineChart<Number, Number>>());
+		final List<List<Particle>> solutions = Collections
+				.synchronizedList(new ArrayList<List<Particle>>());
 
 		if (PROBLEM.equals("ZDT1")) {
 			stage.setTitle("Pareto Front for ZDT1");
@@ -65,13 +66,35 @@ public class PSO_Exec_Chart extends Application {
 
 		System.out.println("Starting computation of the " + PROBLEM + " problem with " + total + " threads.\n");
 
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
+		for (int i = 0; i < GRAPHS_HORIZONTAL; i++) {
+			for (int j = 0; j < GRAPHS_VERTICAL; j++) {
+				Runnable r = new Runnable() {
+					@Override
+					public void run() {
 
-				final PSO_Solver solver = new PSO_Solver();
-				final List<Particle> result = solver.solve(SWARM_SZ, ARCHIVE_SZ, GENERATIONS, zdt);
+						final PSO_Solver solver = new PSO_Solver();
+						final List<Particle> result = solver.solve(SWARM_SZ, ARCHIVE_SZ, GENERATIONS, zdt);
 
+						solutions.add(result);
+					}
+				};
+
+				es.execute(r);
+			}
+		}
+
+		es.shutdown();
+		try {
+			es.awaitTermination(5, TimeUnit.MINUTES);
+		} catch (InterruptedException e) {
+		}
+
+		// add all charts
+		for (int i = 0; i < GRAPHS_HORIZONTAL; i++) {
+			for (int j = 0; j < GRAPHS_VERTICAL; j++) {
+
+				List<Particle> result = solutions.get(i + j * GRAPHS_HORIZONTAL);
+				
 				// defining the axes
 				final NumberAxis xAxis = new NumberAxis();
 				final NumberAxis yAxis = new NumberAxis();
@@ -103,28 +126,7 @@ public class PSO_Exec_Chart extends Application {
 				lineChart.getData().add(series);
 				lineChart.setLegendVisible(false);
 
-				// can't be added directly because javaFX does not support
-				// thread safety
-				charts.add(lineChart);
-			}
-		};
-
-		for (int i = 0; i < GRAPHS_HORIZONTAL; i++) {
-			for (int j = 0; j < GRAPHS_VERTICAL; j++) {
-				es.execute(r);
-			}
-		}
-
-		es.shutdown();
-		try {
-			es.awaitTermination(5, TimeUnit.MINUTES);
-		} catch (InterruptedException e) {
-		}
-
-		// add all charts
-		for (int i = 0; i < GRAPHS_HORIZONTAL; i++) {
-			for (int j = 0; j < GRAPHS_VERTICAL; j++) {
-				grid.add(charts.get(i + j * GRAPHS_HORIZONTAL), i, j);
+				grid.add(lineChart, i, j);
 			}
 		}
 

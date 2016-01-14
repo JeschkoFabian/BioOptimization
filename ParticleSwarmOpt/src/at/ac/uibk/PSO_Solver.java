@@ -93,16 +93,17 @@ public class PSO_Solver {
 	 * @return The leader
 	 */
 	private Particle selectLeader(Particle p) {
-		if (sr.nextBoolean()) {
-			return archive.getTournamentBest(5);
-		} else {
+//		if (sr.nextBoolean()) {
+			return archive.getTournamentBest(2);
+//		} else {
 			// funnily this improved the performance, however
 			// both as 10 did not work that great
 			// return archive.getTournamentBest(10);
 
 			// not really a big upgrade
-			return archive.getProximityBest(p, 10);
-		}
+//			return archive.getProximityBest(p, 10);
+//			return archive.getTournamentBest(5);
+//		}
 	}
 
 	/**
