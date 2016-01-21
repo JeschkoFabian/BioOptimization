@@ -56,10 +56,12 @@ public class Ant extends Thread{
 		}
 	}
 	
+	// TODO: implement
 	public void updatePheromones(){
 		
 	}
 
+	// TODO: add pheromone influence
 	private double calcCost(TSP_Node node) {
 		double dist = nodes.get(path[moves]).calculateDistance(node);
 
