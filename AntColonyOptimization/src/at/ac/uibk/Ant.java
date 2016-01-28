@@ -1,31 +1,24 @@
 package at.ac.uibk;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Ant extends Thread{
+public class Ant extends Thread {
 	private SecureRandom rand = new SecureRandom();
 	// given, nodes stays constant, pheromone will be updated
 	private final List<TSP_Node> nodes;
 	private double[][] pheromone;
-	
 	private int[] path;
-	private double cost;
-	private int moves;
-	
 	private List<TSP_Node> remaining;
 
 	public Ant(final List<TSP_Node> nodes, double[][] pheromone) {
 		this.nodes = nodes;
 		this.pheromone = pheromone;
-		
-		for (TSP_Node n : nodes){
-			remaining.add(n);
-		}
-		
+
+		remaining = new ArrayList<TSP_Node>(nodes);
+
 		path = new int[nodes.size()];
-		cost = 0;
-		moves = 0;
 	}
 
 	@Override
@@ -36,35 +29,67 @@ public class Ant extends Thread{
 	public void constructSolution() {
 		// random starting point
 		path[0] = rand.nextInt(path.length);
-		
+
 		remaining.remove(nodes.get(path[0]));
-		
-		for (int i = 1; i < nodes.size(); i++){
-			double bestCost = Double.MAX_VALUE;
-			
-			for(TSP_Node node : remaining){
-				double tmpCost = calcCost(node);
-				
-				if (tmpCost < bestCost){
-					bestCost = tmpCost;
-					
-					path[i] = nodes.indexOf(node);
-				}
-			}
-			
-			remaining.remove(nodes.get(path[i]));
+
+		for (int i = 1; i < nodes.size(); i++) {
+			// input node from last step
+			TSP_Node node = selectNextNode(nodes.get(path[i - 1]));
+
+			path[i] = nodes.indexOf(node);
+
+			remaining.remove(node);
 		}
 	}
-	
+
 	// TODO: implement
-	public void updatePheromones(){
-		
+	public void updatePheromones() {
+		for (int i = 0; i < path.length - 1; i++) {
+			pheromone[path[i]][path[i + 1]] += 2;
+		}
+		pheromone[path[path.length - 1]][path[0]] += 2;
 	}
 
 	// TODO: add pheromone influence
-	private double calcCost(TSP_Node node) {
-		double dist = nodes.get(path[moves]).calculateDistance(node);
+	private TSP_Node selectNextNode(TSP_Node node) {
+		double[] cost = new double[remaining.size()];
+		double totalCost = 0;
 
-		return cost + dist;
+		for (int i = 0; i < remaining.size(); i++) {
+			TSP_Node toVisit = remaining.get(i);
+
+			double tmp = Math.pow(pheromone[nodes.indexOf(node)][nodes.indexOf(toVisit)], 1)
+					* Math.pow(1 / node.calculateDistance(toVisit), 5);
+
+			totalCost += tmp;
+			cost[i] = tmp;
+		}
+
+		double prob = rand.nextDouble();
+
+		for (int i = 0; i < remaining.size(); i++) {
+			prob -= cost[i] / totalCost;
+
+			if (prob <= 0) {
+				return remaining.get(i);
+			}
+		}
+
+		return remaining.get(remaining.size() - 1);
+	}
+
+	public double calculatePath() {
+		double cost = 0;
+
+		for (int i = 0; i < nodes.size() - 1; i++) {
+			cost += nodes.get(path[i]).calculateDistance(nodes.get(path[i + 1]));
+		}
+		cost += nodes.get(path[nodes.size() - 1]).calculateDistance(nodes.get(path[0]));
+
+		return cost;
+	}
+	
+	public int[] getPath(){
+		return path;
 	}
 }

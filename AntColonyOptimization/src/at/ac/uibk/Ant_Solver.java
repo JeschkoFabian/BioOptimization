@@ -3,10 +3,9 @@ package at.ac.uibk;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Ant_Solver {
 	private List<TSP_Node> nodes;
@@ -14,56 +13,66 @@ public class Ant_Solver {
 
 	private final int ANT_NUM;
 
+	private double bestPathCost = Double.MAX_VALUE;
+	private int[] bestPath = null;
+	
 	public Ant_Solver(int ants) {
 		ANT_NUM = ants;
 	}
 
-	public int[] solve() {
+	public void solve() {
 		try {
 			int sz = 225;
-			nodes = new ArrayList<TSP_Node>();
+			nodes = new ArrayList<TSP_Node>(sz);
 			pheromone = new double[sz][sz];
-
-			ExecutorService es = Executors.newFixedThreadPool(ANT_NUM);
+			// init all pheros
+			for (int i = 0; i < sz; i++){
+				Arrays.fill(pheromone[i], 1);
+			}
 
 			String problem = new String(Files.readAllBytes(new File("ts255.tsp").toPath()));
 			Scanner sc = new Scanner(problem);
 
 			while (sc.hasNextInt()) {
 				int pos = sc.nextInt();
-				nodes.set(pos - 1, new TSP_Node_Impl(sc.nextDouble(), sc.nextDouble()));
+				nodes.add(pos - 1, new TSP_Node_Impl(sc.nextDouble(), sc.nextDouble()));
 			}
 
 			sc.close();
 
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 200; i++) {
 				List<Ant> ants = createAnts(ANT_NUM);
 
 				for (Ant a : ants) {
-					es.execute(a);
+					a.start();
 				}
 
 				for (Ant a : ants) {
 					a.join();
 
+					double cost = a.calculatePath();
+					if (cost < bestPathCost){
+						bestPathCost = cost;
+						bestPath = a.getPath();
+					}
+					
 					a.updatePheromones();
 				}
 
 				evaporatePheromone();
 			}
-
-			// return path with best phero values
-			return null;
 		} catch (Exception e) {
 			e.printStackTrace();
-			
-			return null;
 		}
 	}
 
 	// TODO: implement
 	public void evaporatePheromone() {
-
+		for (int i = 0; i < pheromone.length; i++){
+			for (int j = 0; j < pheromone[i].length; j++){
+				pheromone[i][j] /= 2;
+			}
+		}
 	}
 
 	public List<Ant> createAnts(int sz) {
@@ -76,4 +85,11 @@ public class Ant_Solver {
 		return ants;
 	}
 
+	public double getBestPathCost() {
+		return bestPathCost;
+	}
+
+	public int[] getBestPath() {
+		return bestPath;
+	}
 }
