@@ -58,8 +58,8 @@ public class Ant extends Thread {
 		for (int i = 0; i < remaining.size(); i++) {
 			TSP_Node toVisit = remaining.get(i);
 
-			double tmp = Math.pow(pheromone[nodes.indexOf(node)][nodes.indexOf(toVisit)], 1)
-					* Math.pow(1 / node.calculateDistance(toVisit), 5);
+			double tmp = /*this.pow(*/pheromone[nodes.indexOf(node)][nodes.indexOf(toVisit)]/*, 1)*/
+					* this.pow(1 / node.calculateDistance(toVisit), 5);
 
 			totalCost += tmp;
 			cost[i] = tmp;
@@ -91,5 +91,11 @@ public class Ant extends Thread {
 	
 	public int[] getPath(){
 		return path;
+	}
+	
+	public double pow(final double a, final double b) {
+		final int x = (int) (Double.doubleToLongBits(a) >> 32);
+		final int y = (int) (b * (x - 1072632447) + 1072632447);
+		return Double.longBitsToDouble(((long) y) << 32);
 	}
 }

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class Ant_Solver {
@@ -12,12 +13,14 @@ public class Ant_Solver {
 	private double pheromone[][];
 
 	private final int ANT_NUM;
+	private final int ITER_NUM;
 
 	private double bestPathCost = Double.MAX_VALUE;
 	private int[] bestPath = null;
 	
-	public Ant_Solver(int ants) {
+	public Ant_Solver(int ants, int iter) {
 		ANT_NUM = ants;
+		ITER_NUM = iter;
 	}
 
 	public void solve() {
@@ -32,7 +35,7 @@ public class Ant_Solver {
 
 			String problem = new String(Files.readAllBytes(new File("ts255.tsp").toPath()));
 			Scanner sc = new Scanner(problem);
-
+			sc.useLocale(Locale.US);
 			while (sc.hasNextInt()) {
 				int pos = sc.nextInt();
 				nodes.add(pos - 1, new TSP_Node_Impl(sc.nextDouble(), sc.nextDouble()));
@@ -40,7 +43,7 @@ public class Ant_Solver {
 
 			sc.close();
 
-			for (int i = 0; i < 200; i++) {
+			for (int i = 0; i < ITER_NUM; i++) {
 				List<Ant> ants = createAnts(ANT_NUM);
 
 				for (Ant a : ants) {
@@ -60,6 +63,7 @@ public class Ant_Solver {
 				}
 
 				evaporatePheromone();
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
