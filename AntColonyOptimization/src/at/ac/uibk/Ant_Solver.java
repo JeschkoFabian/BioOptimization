@@ -70,7 +70,6 @@ public class Ant_Solver {
 		}
 	}
 
-	// TODO: implement
 	public void evaporatePheromone() {
 		for (int i = 0; i < pheromone.length; i++){
 			for (int j = 0; j < pheromone[i].length; j++){
