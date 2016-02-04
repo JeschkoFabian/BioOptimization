@@ -46,12 +46,18 @@ public class Ant extends Thread {
 	public void updatePheromones() {
 		for (int i = 0; i < path.length - 1; i++) {
 			pheromone[path[i]][path[i + 1]] += 2;
+			pheromone[path[i + 1]][path[i]] += 2;
 		}
 		pheromone[path[path.length - 1]][path[0]] += 2;
+		pheromone[path[0]][path[path.length - 1]] += 2;
 	}
 
 	// TODO: add pheromone influence
 	private TSP_Node selectNextNode(TSP_Node node) {
+//		if (rand.nextDouble() < 0.01){
+//			return remaining.get(rand.nextInt(remaining.size()));
+//		}
+		
 		double[] cost = new double[remaining.size()];
 		double totalCost = 0;
 

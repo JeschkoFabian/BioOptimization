@@ -7,6 +7,7 @@ public class Ant_Exec {
 	// TODO: move this to Ant_Solver
 
 	public static void main(String[] args) throws IOException, InterruptedException {
+		System.out.println("Starting ant colony optimization.");
 		Ant_Solver solver = new Ant_Solver(180, 400);
 		solver.solve();
 		
